@@ -8,7 +8,7 @@ function App() {
           Fretboard Magic
         </h1>
         <p style={{ color: '#94a3b8', fontSize: '1.1rem' }}>
-          Explore the fretboard. Click any note to reveal it.
+          Unlock Pandora's Box of Fretboard Training. Choose a game and master the neck.
         </p>
       </header>
 

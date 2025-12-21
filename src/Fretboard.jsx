@@ -88,6 +88,21 @@ export default function Fretboard() {
     const [timerProgress, setTimerProgress] = useState(0);
     const [gameFeedback, setGameFeedback] = useState({});
     const [score, setScore] = useState(0);
+    const [activeGameMode, setActiveGameMode] = useState(null); // null = Explorer, 'string-walker' = The Game
+
+    const switchGameMode = (mode) => {
+        if (practiceActive) stopPractice(); // Stop any running game
+
+        // Always reset study mode & board when switching/closing games
+        setStudyMode(false);
+        setRevealed({});
+
+        if (activeGameMode === mode) {
+            setActiveGameMode(null); // Toggle off if clicked again
+        } else {
+            setActiveGameMode(mode);
+        }
+    };
 
     // High Score State (Load from LocalStorage)
     const [highScore, setHighScore] = useState(() => {
@@ -453,112 +468,138 @@ export default function Fretboard() {
                 <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#f59e0b' }}>{highScore}</div>
             </div>
 
-            {/* PRACTICE HUD */}
-            <div className="game-hud" style={{ flexDirection: 'column', gap: '15px', marginBottom: '50px' }}>
-                <div style={{ display: 'flex', gap: '20px', alignItems: 'center', width: '100%', justifyContent: 'center', flexWrap: 'wrap' }}>
-                    {/* Controls */}
-                    {!practiceActive ? (
-                        <>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <label style={{ color: '#94a3b8', fontWeight: 600 }}>Note:</label>
-                                <select
-                                    value={practiceTargetNote}
-                                    onChange={(e) => setPracticeTargetNote(e.target.value)}
-                                    className="btn"
-                                    style={{ padding: '8px', minWidth: '60px' }}
-                                >
-                                    {NOTES.map(n => <option key={n} value={n}>{n}</option>)}
-                                </select>
-                            </div>
-
-                            <button
-                                className="btn"
-                                onClick={toggleStudyMode}
-                                style={studyMode ? { backgroundColor: '#2dd4bf', color: '#0f172a', borderColor: '#2dd4bf' } : {}}
-                            >
-                                {studyMode ? '👁️ STUDYING' : '👁️ STUDY'}
-                            </button>
-
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <label style={{ color: '#94a3b8', fontWeight: 600 }}>Timer (s):</label>
-                                <input
-                                    type="range"
-                                    min="1" max="10" step="1"
-                                    value={secondsPerNote}
-                                    onChange={(e) => setSecondsPerNote(Number(e.target.value))}
-                                    style={{ width: '100px', accentColor: '#2dd4bf' }}
-                                />
-                                <span style={{ color: '#f8fafc', minWidth: '40px' }}>{secondsPerNote}s</span>
-                            </div>
-
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <label style={{ color: '#94a3b8', fontWeight: 600 }}>Str:</label>
-                                <select
-                                    value={numberOfStrings}
-                                    onChange={(e) => setNumberOfStrings(Number(e.target.value))}
-                                    className="btn"
-                                    style={{ padding: '8px' }}
-                                >
-                                    {[1, 2, 3, 4, 5, 6].map(n => <option key={n} value={n}>{n}</option>)}
-                                </select>
-                            </div>
-
-                            <button className="btn" onClick={startPractice} disabled={!isLoaded}>
-                                {isLoaded ? 'START CHALLENGE' : 'Loading...'}
-                            </button>
-
-                            {/* Show Last Score if available */}
-                            {score > 0 && (
-                                <div style={{ marginLeft: '15px', color: '#f59e0b', fontWeight: 'bold' }}>
-                                    LAST ROUND: {score} PTS
-                                </div>
-                            )}
-                        </>
-                    ) : (
-                        // ACTIVE STATE
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '40px' }}>
-                            <div style={{ textAlign: 'center' }}>
-                                <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600 }}>SCORE</div>
-                                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f59e0b' }}>{score}</div>
-                            </div>
-
-                            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#f8fafc' }}>
-                                FIND: <span style={{ color: '#2dd4bf' }}>{practiceTargetNote}</span>
-                            </div>
-
-                            {/* VISUAL PIE TIMER */}
-                            <div style={{
-                                width: '60px',
-                                height: '60px',
-                                borderRadius: '50%',
-                                background: `conic-gradient(#ef4444 ${timerProgress}%, #22c55e 0)`,
-                                boxShadow: '0 0 15px rgba(0,0,0,0.5)',
-                                border: '4px solid #1e293b',
-                                transition: 'background 0.1s linear'
-                            }}></div>
-
-                            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f8fafc', minWidth: '150px', textAlign: 'center' }}>
-                                {feedbackMsg ||
-                                    <div style={{ display: 'flex', flexDirection: 'column', lineHeight: '1.2' }}>
-                                        <span>ACTIVE:</span>
-                                        <span style={{ color: '#facc15', fontSize: '1rem' }}>
-                                            {/* Convert index 0 (Low E) to String Name */}
-                                            {currentStringIndex !== null ? `STRING ${currentStringIndex + 1} (${TUNING[currentStringIndex].slice(0, -1)})` : ''}
-                                        </span>
-                                    </div>
-                                }
-                            </div>
-
-                            {/* Hide GIVE UP button if game is won/cleared */}
-                            {!feedbackMsg.includes('CLEARED') && (
-                                <button className="btn" onClick={stopPractice} style={{ borderColor: '#ef4444', color: '#ef4444' }}>
-                                    GIVE UP
-                                </button>
-                            )}
-                        </div>
-                    )}
-                </div>
+            {/* GAME SELECTION MENU */}
+            <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', marginBottom: '30px' }}>
+                <button
+                    className="btn"
+                    style={{
+                        backgroundColor: activeGameMode === 'string-walker' ? '#2dd4bf' : '#1e293b',
+                        color: activeGameMode === 'string-walker' ? '#0f172a' : '#94a3b8',
+                        borderColor: activeGameMode === 'string-walker' ? '#2dd4bf' : '#334155',
+                        fontSize: '1.2rem',
+                        padding: '12px 24px',
+                        letterSpacing: '1px'
+                    }}
+                    onClick={() => switchGameMode('string-walker')}
+                >
+                    STRING-WALKER
+                </button>
             </div>
+
+            {/* STRING WALKER GAME HUD */}
+            {activeGameMode === 'string-walker' && (
+                <div className="game-hud" style={{ flexDirection: 'column', gap: '15px', marginBottom: '50px', background: 'rgba(30, 41, 59, 0.5)', padding: '20px', borderRadius: '12px', border: '1px solid #334155' }}>
+
+                    {/* Game Instructions Header */}
+                    <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+                        <p style={{ margin: '0', color: '#94a3b8', fontSize: '0.9rem' }}>Find the notes under pressure. Select note, set timer and choose number of strings. Engage study-mode if needed.</p>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '20px', alignItems: 'center', width: '100%', justifyContent: 'center', flexWrap: 'wrap' }}>
+                        {/* Controls */}
+                        {!practiceActive ? (
+                            <>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <label style={{ color: '#94a3b8', fontWeight: 600 }}>Note:</label>
+                                    <select
+                                        value={practiceTargetNote}
+                                        onChange={(e) => setPracticeTargetNote(e.target.value)}
+                                        className="btn"
+                                        style={{ padding: '8px', minWidth: '60px' }}
+                                    >
+                                        {NOTES.map(n => <option key={n} value={n}>{n}</option>)}
+                                    </select>
+                                </div>
+
+                                <button
+                                    className="btn"
+                                    onClick={toggleStudyMode}
+                                    style={studyMode ? { backgroundColor: '#2dd4bf', color: '#0f172a', borderColor: '#2dd4bf' } : {}}
+                                >
+                                    {studyMode ? 'STUDYING' : 'STUDY'}
+                                </button>
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <label style={{ color: '#94a3b8', fontWeight: 600 }}>Timer (s):</label>
+                                    <input
+                                        type="range"
+                                        min="1" max="10" step="1"
+                                        value={secondsPerNote}
+                                        onChange={(e) => setSecondsPerNote(Number(e.target.value))}
+                                        style={{ width: '100px', accentColor: '#2dd4bf' }}
+                                    />
+                                    <span style={{ color: '#f8fafc', minWidth: '40px' }}>{secondsPerNote}s</span>
+                                </div>
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <label style={{ color: '#94a3b8', fontWeight: 600 }}>Str:</label>
+                                    <select
+                                        value={numberOfStrings}
+                                        onChange={(e) => setNumberOfStrings(Number(e.target.value))}
+                                        className="btn"
+                                        style={{ padding: '8px' }}
+                                    >
+                                        {[1, 2, 3, 4, 5, 6].map(n => <option key={n} value={n}>{n}</option>)}
+                                    </select>
+                                </div>
+
+                                <button className="btn" onClick={startPractice} disabled={!isLoaded}>
+                                    {isLoaded ? 'START CHALLENGE' : 'Loading...'}
+                                </button>
+
+                                {/* Show Last Score if available */}
+                                {score > 0 && (
+                                    <div style={{ marginLeft: '15px', color: '#f59e0b', fontWeight: 'bold' }}>
+                                        LAST ROUND: {score} PTS
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            // ACTIVE STATE
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '40px' }}>
+                                <div style={{ textAlign: 'center' }}>
+                                    <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600 }}>SCORE</div>
+                                    <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f59e0b' }}>{score}</div>
+                                </div>
+
+                                <div style={{ fontSize: '2rem', fontWeight: 800, color: '#f8fafc' }}>
+                                    FIND: <span style={{ color: '#2dd4bf' }}>{practiceTargetNote}</span>
+                                </div>
+
+                                {/* VISUAL PIE TIMER */}
+                                <div style={{
+                                    width: '60px',
+                                    height: '60px',
+                                    borderRadius: '50%',
+                                    background: `conic-gradient(#ef4444 ${timerProgress}%, #22c55e 0)`,
+                                    boxShadow: '0 0 15px rgba(0,0,0,0.5)',
+                                    border: '4px solid #1e293b',
+                                    transition: 'background 0.1s linear'
+                                }}></div>
+
+                                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f8fafc', minWidth: '150px', textAlign: 'center' }}>
+                                    {feedbackMsg ||
+                                        <div style={{ display: 'flex', flexDirection: 'column', lineHeight: '1.2' }}>
+                                            <span>ACTIVE:</span>
+                                            <span style={{ color: '#facc15', fontSize: '1rem' }}>
+                                                {/* Convert index 0 (Low E) to String Name */}
+                                                {currentStringIndex !== null ? `STRING ${currentStringIndex + 1} (${TUNING[currentStringIndex].slice(0, -1)})` : ''}
+                                            </span>
+                                        </div>
+                                    }
+                                </div>
+
+                                {/* Hide GIVE UP button if game is won/cleared */}
+                                {!feedbackMsg.includes('CLEARED') && (
+                                    <button className="btn" onClick={stopPractice} style={{ borderColor: '#ef4444', color: '#ef4444' }}>
+                                        GIVE UP
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
 
             <div className="fretboard-scroll-container">
 
