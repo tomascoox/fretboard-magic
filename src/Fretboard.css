@@ -139,10 +139,11 @@
     position: absolute;
     top: 0;
     bottom: 0;
-    width: 3px;
+    width: 8px;
+    /* DEBUG WIDTH */
     /* Slightly thicker for premium look */
     /* 3D Gold Gradient */
-    background: linear-gradient(90deg, #8a6000, #fddb92 40%, #fddb92 60%, #8a6000);
+    background: linear-gradient(90deg, #8a6000, #fddb92 35%, #fddb92 65%, #8a6000);
     z-index: 2;
     /* Stronger Shadows for high relief effect */
     box-shadow: -1px 0 2px rgba(0, 0, 0, 0.8), 4px 0 8px rgba(0, 0, 0, 0.9);
