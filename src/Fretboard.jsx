@@ -53,6 +53,48 @@ const getNoteWithOctave = (stringIndex, fretIndex) => {
     return `${noteName}${octave}`;
 };
 
+/*
+  TRIAD SHAPES DEFINITION
+  Formats: { s: stringIndex, f: fretIndex }
+  String Indices: 0=LowE, 1=A, 2=D, 3=G, 4=B, 5=HighE
+*/
+const TRIAD_SHAPES = {
+    'A-Major': {
+        'top': [ // G, B, e (3, 4, 5)
+            { name: '1st Inv', notes: [{ s: 3, f: 6 }, { s: 4, f: 5 }, { s: 5, f: 5 }] },
+            { name: '2nd Inv', notes: [{ s: 3, f: 9 }, { s: 4, f: 10 }, { s: 5, f: 9 }] },
+            { name: 'Root Pos', notes: [{ s: 3, f: 14 }, { s: 4, f: 14 }, { s: 5, f: 12 }] }
+        ],
+        'middle': [ // D, G, B (2, 3, 4)
+            { name: '1st Inv', notes: [{ s: 2, f: 11 }, { s: 3, f: 9 }, { s: 4, f: 10 }] },
+            { name: '2nd Inv', notes: [{ s: 2, f: 14 }, { s: 3, f: 14 }, { s: 4, f: 14 }] },
+            { name: 'Root Pos', notes: [{ s: 2, f: 7 }, { s: 3, f: 6 }, { s: 4, f: 5 }] }
+        ],
+        'bottom': [ // A, D, G (1, 2, 3)
+            { name: 'Root Pos', notes: [{ s: 1, f: 12 }, { s: 2, f: 11 }, { s: 3, f: 9 }] },
+            { name: '1st Inv', notes: [{ s: 1, f: 16 }, { s: 2, f: 14 }, { s: 3, f: 14 }] },
+            { name: '2nd Inv', notes: [{ s: 1, f: 7 }, { s: 2, f: 7 }, { s: 3, f: 6 }] }
+        ]
+    },
+    'F#-Minor': { // F#, A, C#
+        'top': [ // G, B, e (3, 4, 5)
+            { name: '1st Inv', notes: [{ s: 3, f: 2 }, { s: 4, f: 2 }, { s: 5, f: 2 }] },
+            { name: '2nd Inv', notes: [{ s: 3, f: 6 }, { s: 4, f: 7 }, { s: 5, f: 5 }] },
+            { name: 'Root Pos', notes: [{ s: 3, f: 11 }, { s: 4, f: 10 }, { s: 5, f: 9 }] }
+        ],
+        'middle': [ // D, G, B (2, 3, 4)
+            { name: '1st Inv', notes: [{ s: 2, f: 7 }, { s: 3, f: 6 }, { s: 4, f: 7 }] },
+            { name: '2nd Inv', notes: [{ s: 2, f: 11 }, { s: 3, f: 11 }, { s: 4, f: 10 }] },
+            { name: 'Root Pos', notes: [{ s: 2, f: 4 }, { s: 3, f: 2 }, { s: 4, f: 2 }] }
+        ],
+        'bottom': [ // A, D, G (1, 2, 3)
+            { name: 'Root Pos', notes: [{ s: 1, f: 9 }, { s: 2, f: 7 }, { s: 3, f: 6 }] },
+            { name: '1st Inv', notes: [{ s: 1, f: 12 }, { s: 2, f: 11 }, { s: 3, f: 11 }] },
+            { name: '2nd Inv', notes: [{ s: 1, f: 4 }, { s: 2, f: 4 }, { s: 3, f: 2 }] }
+        ]
+    }
+};
+
 
 export default function Fretboard() {
     const [revealed, setRevealed] = useState({});
@@ -71,6 +113,10 @@ export default function Fretboard() {
     const [score, setScore] = useState(0);
     const [activeGameMode, setActiveGameMode] = useState(null); // null = Explorer, 'string-walker' = The Game
 
+    // TRIAD HUNT STATE
+    const [triadKey, setTriadKey] = useState('A-Major');
+    const [triadSet, setTriadSet] = useState('top');
+
     const switchGameMode = (mode) => {
         if (practiceActive) stopPractice(); // Stop any running game
 
@@ -82,6 +128,28 @@ export default function Fretboard() {
             setActiveGameMode(null); // Toggle off if clicked again
         } else {
             setActiveGameMode(mode);
+        }
+    };
+
+    const showTriadShape = (shapeName) => {
+        setRevealed({});
+        const shapes = TRIAD_SHAPES[triadKey][triadSet];
+        const shape = shapes.find(s => s.name === shapeName);
+
+        if (shape) {
+            const newRevealed = {};
+            shape.notes.forEach(n => {
+                newRevealed[`${n.s}-${n.f}`] = true;
+            });
+            setRevealed(newRevealed);
+
+            // Play Arpeggio
+            // Sort by string index (Low pitch strings first: 0..5)
+            const sortedNotes = [...shape.notes].sort((a, b) => a.s - b.s);
+
+            sortedNotes.forEach((n, i) => {
+                setTimeout(() => playNote(getNoteWithOctave(n.s, n.f), n.s), i * 200);
+            });
         }
     };
 
@@ -538,6 +606,21 @@ export default function Fretboard() {
                 >
                     STRING-WALKER
                 </button>
+
+                <button
+                    className="btn"
+                    style={{
+                        backgroundColor: activeGameMode === 'triad-hunt' ? '#8b5cf6' : '#1e293b', // Violet theme for Triads
+                        color: activeGameMode === 'triad-hunt' ? '#0f172a' : '#94a3b8',
+                        borderColor: activeGameMode === 'triad-hunt' ? '#8b5cf6' : '#334155',
+                        fontSize: '1.2rem',
+                        padding: '12px 24px',
+                        letterSpacing: '1px'
+                    }}
+                    onClick={() => switchGameMode('triad-hunt')}
+                >
+                    TRIAD-HUNT
+                </button>
             </div>
 
             {/* STRING WALKER GAME HUD */}
@@ -652,6 +735,92 @@ export default function Fretboard() {
                             </div>
                         )}
                     </div>
+                </div>
+            )}
+
+            {/* TRIAD HUNT HUD */}
+            {activeGameMode === 'triad-hunt' && (
+                <div className="game-hud" style={{ flexDirection: 'column', gap: '15px', marginBottom: '50px', background: 'rgba(30, 41, 59, 0.5)', padding: '20px', borderRadius: '12px', border: '1px solid #8b5cf6' }}>
+
+                    {/* Header */}
+                    <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+                        <h2 style={{ margin: '0 0 5px 0', color: '#8b5cf6', letterSpacing: '2px' }}>THE LIBRARY</h2>
+                        <p style={{ margin: '0', color: '#94a3b8', fontSize: '0.9rem' }}>
+                            Explore the shapes. Select a Key, String Set, and Inversion to reveal the truth.
+                        </p>
+                    </div>
+
+                    {/* Controls Row */}
+                    <div style={{ display: 'flex', gap: '20px', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
+
+                        {/* KEY SELECTOR */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                            <label style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: 600 }}>KEY</label>
+                            <div style={{ display: 'flex', gap: '5px' }}>
+                                {['A-Major', 'F#-Minor'].map(k => (
+                                    <button
+                                        key={k}
+                                        className="btn"
+                                        style={{
+                                            backgroundColor: triadKey === k ? '#8b5cf6' : 'transparent',
+                                            color: triadKey === k ? '#fff' : '#94a3b8',
+                                            borderColor: triadKey === k ? '#8b5cf6' : '#475569',
+                                            fontSize: '0.9rem', padding: '6px 12px'
+                                        }}
+                                        onClick={() => setTriadKey(k)}
+                                    >
+                                        {k}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* SET SELECTOR */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                            <label style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: 600 }}>STRING SET</label>
+                            <div style={{ display: 'flex', gap: '5px' }}>
+                                {['top', 'middle', 'bottom'].map(s => (
+                                    <button
+                                        key={s}
+                                        className="btn"
+                                        style={{
+                                            backgroundColor: triadSet === s ? '#8b5cf6' : 'transparent',
+                                            color: triadSet === s ? '#fff' : '#94a3b8',
+                                            borderColor: triadSet === s ? '#8b5cf6' : '#475569',
+                                            textTransform: 'uppercase',
+                                            fontSize: '0.9rem', padding: '6px 12px'
+                                        }}
+                                        onClick={() => setTriadSet(s)}
+                                    >
+                                        {s}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                    </div>
+
+                    {/* SHAPE SELECTORS (THE LIBRARY BUTTONS) */}
+                    <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', marginTop: '10px' }}>
+                        {['Root Pos', '1st Inv', '2nd Inv'].map(shapeName => (
+                            <button
+                                key={shapeName}
+                                className="btn"
+                                style={{
+                                    borderColor: '#e2e8f0',
+                                    color: '#f8fafc',
+                                    fontWeight: 'bold',
+                                    padding: '15px 30px',
+                                    fontSize: '1rem',
+                                    backgroundColor: '#1e293b' // Default dark
+                                }}
+                                onClick={() => showTriadShape(shapeName)}
+                            >
+                                {shapeName === 'Root Pos' ? 'ROOT' : shapeName.toUpperCase()}
+                            </button>
+                        ))}
+                    </div>
+
                 </div>
             )}
 
