@@ -2333,12 +2333,38 @@ export default function Fretboard() {
                                                 else shapeBassInterval = '5';
                                             }
 
-                                            const shapeColors = {
-                                                '1': '#f43f5e',
-                                                '3': '#3b82f6',
-                                                '5': '#eab308'
+                                            // SHAPE FINGERPRINTING & COLORING
+                                            // 1. Sort by string index (Thick -> Thin)
+                                            const sortedShape = finalShape.slice().sort((a, b) => a.s - b.s);
+                                            // 2. Normalize frets relative to the lowest fret in the shape
+                                            const minF = Math.min(...sortedShape.map(d => d.f));
+                                            const fingerprint = sortedShape.map(d => d.f - minF).join('');
+
+                                            // 3. STRICT COLOR MAPPING (The "Fingerprint")
+                                            // Assigns a specific color to each unique visual shape (finger placement pattern).
+                                            const SHAPE_COLOR_MAP = {
+                                                // --- 2nd Inversion Shapes ---
+                                                '010': '#f59e0b', // Set 1 (Triangle) -> Yellow (Reserved)
+                                                '000': '#8b5cf6', // Set 2 (Bar) -> Purple
+                                                '110': '#10b981', // Set 3/4 -> Emerald
+
+                                                // --- 1st Inversion Shapes ---
+                                                '100': '#3b82f6', // Set 1 -> Blue
+                                                '201': '#84cc16', // Set 2 -> Lime (Distinct from Blue)
+                                                '200': '#d946ef', // Set 3/4 -> Fuchsia (Distinct from Blue/Lime)
+
+                                                // --- Root Position Shapes ---
+                                                '220': '#f43f5e', // Set 1 -> Red
+                                                '210': '#f97316', // Set 2 -> Orange
+                                                '320': '#ec4899', // Set 3/4 -> Pink
                                             };
-                                            designerColor = shapeColors[shapeBassInterval];
+
+                                            if (SHAPE_COLOR_MAP[fingerprint]) {
+                                                designerColor = SHAPE_COLOR_MAP[fingerprint];
+                                            } else {
+                                                // Fallback for unknown shapes (should rarely be hit for closed triads)
+                                                designerColor = '#94a3b8';
+                                            }
                                         }
                                     }
                                 }
