@@ -24,17 +24,17 @@
     --base-unit: 80px;
     --nut-width: 50px;
     --string-height: 34px;
+    --fret-width: 6px;
 }
-
-
 
 
 
 @media (max-width: 1024px) {
     .fretboard-wrapper {
-        --base-unit: 60px;
+        --base-unit: 52px;
         --nut-width: 45px;
         --string-height: 30px;
+        --fret-width: 5px;
         padding: 20px;
         /* Reduce padding */
     }
@@ -45,6 +45,7 @@
         --base-unit: 45px;
         --nut-width: 40px;
         --string-height: 28px;
+        --fret-width: 4px;
         padding: 10px;
     }
 
@@ -56,10 +57,11 @@
 
 @media (max-width: 480px) {
     .fretboard-wrapper {
-        --base-unit: 26px;
+        --base-unit: 24px;
         /* Aggressive shrink for mobile portrait */
         --nut-width: 30px;
         --string-height: 24px;
+        --fret-width: 3px;
         padding: 15px 20px;
         /* More breathing room */
     }
@@ -214,7 +216,7 @@
     position: absolute;
     top: 0;
     bottom: 0;
-    width: 6px;
+    width: var(--fret-width);
     /* Slightly thicker for premium look */
     /* 3D Gold Gradient */
     background: linear-gradient(90deg, #8a6000, #fddb92 35%, #fddb92 65%, #8a6000);
@@ -227,7 +229,7 @@
     position: absolute;
     top: 0;
     bottom: 0;
-    width: 6px;
+    width: var(--fret-width);
     background: #cbd5e1;
     z-index: 3;
     left: 50px;
