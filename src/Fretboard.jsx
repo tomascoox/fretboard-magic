@@ -149,16 +149,44 @@ export default function Fretboard() {
 
     // REF FOR DRAG-TO-PLAY INTERACTION
     const isPointerDown = useRef(false);
+    const lastPlayedRef = useRef(null);
 
     // GLOBAL POINTER UP (RESET DRAG)
     useEffect(() => {
-        const handleUp = () => isPointerDown.current = false;
+        const handleUp = () => {
+            isPointerDown.current = false;
+            lastPlayedRef.current = null;
+        };
         // Also handle cancel/leave to be safe
         window.addEventListener('pointerup', handleUp);
         window.addEventListener('pointercancel', handleUp);
         return () => {
             window.removeEventListener('pointerup', handleUp);
             window.removeEventListener('pointercancel', handleUp);
+        };
+    }, []);
+
+    // GLOBAL AUDIO UNLOCKER (Aggressive)
+    useEffect(() => {
+        const unlockAudio = async () => {
+            try {
+                if (Tone.context.state !== 'running') {
+                    await Tone.start();
+                }
+                // Also explicitly resume standard AudioContext if accessible
+                if (Tone.context.rawContext && Tone.context.rawContext.state === 'suspended') {
+                    await Tone.context.rawContext.resume();
+                }
+            } catch (e) {
+                console.error("Audio unlock failed", e);
+            }
+        };
+
+        const events = ['click', 'touchstart', 'touchend', 'pointerdown', 'keydown'];
+        events.forEach(e => document.addEventListener(e, unlockAudio, { once: true }));
+
+        return () => {
+            events.forEach(e => document.removeEventListener(e, unlockAudio));
         };
     }, []);
 
@@ -739,7 +767,9 @@ export default function Fretboard() {
 
 
     const playNote = async (note, stringIndex) => {
-        await Tone.start();
+        if (Tone.context.state !== 'running') {
+            await Tone.start();
+        }
         const sampler = stringSynths.current[stringIndex];
         if (sampler && isLoaded) {
             // 1. Dampen previous string vibration (Legato)
@@ -2508,25 +2538,36 @@ export default function Fretboard() {
                                                     {/* LAYER 1: NOTE BUTTON */}
                                                     <div
                                                         className={`note-cell ${isVisible ? 'visible' : ''}`}
+                                                        data-string={stringIndex}
+                                                        data-fret={fretIndex}
                                                         style={{
                                                             gridColumn: fretIndex + 1,
                                                             gridRow: visualRow,
-                                                            // Pointer Events Logic:
                                                             pointerEvents: (memoryGameActive && !memoryAllowedStrings.includes(stringIndex)) ? 'none' : 'auto',
                                                             touchAction: 'none' // Critical for Drag-To-Play on mobile
                                                         }}
                                                         onPointerDown={(e) => {
-                                                            e.preventDefault(); // Prevent text selection/scrolling
-                                                            // Capture pointer to ensure tracking even if moving fast
-                                                            // e.target.setPointerCapture(e.pointerId); 
-                                                            // Actually, for "gliding" across notes, we do NOT want capture. We want to enter other nodes.
-
+                                                            e.preventDefault();
                                                             isPointerDown.current = true;
+                                                            lastPlayedRef.current = `${stringIndex}-${fretIndex}`;
                                                             handleNoteInteraction(stringIndex, fretIndex, note);
                                                         }}
-                                                        onPointerEnter={(e) => {
+                                                        onPointerMove={(e) => {
                                                             if (isPointerDown.current) {
-                                                                handleNoteInteraction(stringIndex, fretIndex, note);
+                                                                const target = document.elementFromPoint(e.clientX, e.clientY);
+                                                                const cell = target?.closest('.note-cell');
+
+                                                                if (cell) {
+                                                                    const s = parseInt(cell.getAttribute('data-string'));
+                                                                    const f = parseInt(cell.getAttribute('data-fret'));
+                                                                    const key = `${s}-${f}`;
+
+                                                                    if (lastPlayedRef.current !== key) {
+                                                                        lastPlayedRef.current = key;
+                                                                        const simpleNote = getNoteAt(s, f);
+                                                                        handleNoteInteraction(s, f, simpleNote);
+                                                                    }
+                                                                }
                                                             }
                                                         }}
                                                     >
