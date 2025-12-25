@@ -1295,39 +1295,36 @@ export default function Fretboard() {
                 <div style={{
                     position: 'fixed', top: '60px', left: 0, width: '280px', bottom: 0,
                     background: '#1e293b', borderRight: '1px solid #334155',
-                    zIndex: 1999, padding: '20px', display: 'flex', flexDirection: 'column', gap: '15px',
+                    zIndex: 1999, padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px',
                     boxShadow: '10px 0 30px rgba(0,0,0,0.5)',
                     animation: 'slideIn 0.2s ease-out'
                 }}>
-                    <div className="text-xs font-bold text-slate-500 tracking-widest uppercase mb-2">Tools</div>
                     <button
                         onClick={() => { switchGameMode('chord-designer'); setShowMenu(false); }}
                         className={`w-full text-left px-4 py-3 rounded-lg font-bold transition-all border ${activeGameMode === 'chord-designer' ? 'bg-rose-500 text-white border-rose-500' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-750'}`}
                     >
-                        🎸 TRIADS
+                        TRIADS
                     </button>
-
-                    <div className="text-xs font-bold text-slate-500 tracking-widest uppercase mb-2 mt-4">Games</div>
 
                     <button
                         onClick={() => { switchGameMode('string-walker'); setShowMenu(false); }}
                         className={`w-full text-left px-4 py-3 rounded-lg font-bold transition-all border ${activeGameMode === 'string-walker' ? 'bg-teal-500 text-slate-900 border-teal-500' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-750'}`}
                     >
-                        🚶 STRING WALKER
+                        STRING WALKER
                     </button>
 
                     <button
                         onClick={() => { switchGameMode('triad-hunt'); setShowMenu(false); }}
                         className={`w-full text-left px-4 py-3 rounded-lg font-bold transition-all border ${activeGameMode === 'triad-hunt' ? 'bg-violet-500 text-white border-violet-500' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-750'}`}
                     >
-                        📐 TRIAD HUNT
+                        TRIAD HUNT
                     </button>
 
                     <button
                         onClick={() => { switchGameMode('memory'); setShowMenu(false); }}
                         className={`w-full text-left px-4 py-3 rounded-lg font-bold transition-all border ${activeGameMode === 'memory' ? 'bg-blue-500 text-white border-blue-500' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-750'}`}
                     >
-                        🧠 NOTE HUNT
+                        NOTE HUNT
                     </button>
 
                     <style>{`@keyframes slideIn { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }`}</style>
