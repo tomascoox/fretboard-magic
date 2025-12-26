@@ -117,26 +117,6 @@ export default function Fretboard() {
     const [timerProgress, setTimerProgress] = useState(0);
     const [gameFeedback, setGameFeedback] = useState({});
     const [score, setScore] = useState(0);
-    const [lives, setLives] = useState(3); // New: Arcade state
-    const livesRef = useRef(3); // Ref to avoid stale closures in timer loop
-    useEffect(() => { livesRef.current = lives; }, [lives]);
-
-    const [streak, setStreak] = useState(0); // New: Arcade state
-    const [highScore, setHighScore] = useState(() => {
-        const saved = localStorage.getItem('fretboardHighScore');
-        return saved ? parseInt(saved, 10) : 0;
-    });
-    const [diamonds, setDiamonds] = useState([]); // Flying XP Diamonds
-    const xpRef = useRef(null); // Target for diamonds
-    const [totalXP, setTotalXP] = useState(() => {
-        const saved = localStorage.getItem('fretboardTotalXP');
-        return saved ? parseInt(saved, 10) : 0;
-    });
-
-    // Persist XP
-    useEffect(() => {
-        localStorage.setItem('fretboardTotalXP', totalXP);
-    }, [totalXP]);
     const [activeGameMode, setActiveGameMode] = useState(null); // null = Explorer, 'string-walker' = The Game
 
     // MEMORY GAME STATE
@@ -161,12 +141,14 @@ export default function Fretboard() {
     // REF FOR DRAG-TO-PLAY INTERACTION
     const isPointerDown = useRef(false);
     const lastPlayedRef = useRef(null);
+    const dragSelectRef = useRef({ active: false, type: null, action: null });
 
     // GLOBAL POINTER UP (RESET DRAG)
     useEffect(() => {
         const handleUp = () => {
             isPointerDown.current = false;
             lastPlayedRef.current = null;
+            dragSelectRef.current = { active: false, type: null, action: null };
         };
         // Also handle cancel/leave to be safe
         window.addEventListener('pointerup', handleUp);
@@ -202,38 +184,7 @@ export default function Fretboard() {
     }, []);
 
     // ENFORCE LOCKS (Anti-Ghost Selection)
-    useEffect(() => {
-        if (proMode) return; // Free for all
 
-        // 1. Sanitize Strings (Strict Progression)
-        setMemoryAllowedStrings(prev => {
-            return prev.filter(s => {
-                if (s === 1) return totalXP >= 100;  // A requires 100
-                if (s === 2) return totalXP >= 300;  // D requires 300
-                if (s === 3) return totalXP >= 600;  // G requires 600
-                if (s === 4) return totalXP >= 1000; // B requires 1000
-                if (s === 5) return totalXP >= 1500; // e requires 1500
-                return true; // Low E always allowed
-            });
-        });
-
-        // 2. Sanitize Notes (Granular Progression)
-        setMemoryAllowedNotes(prev => {
-            return prev.filter(n => {
-                if (n.includes('#')) return totalXP >= 2000;
-                // Naturals progression
-                if (['D', 'E'].includes(n)) return totalXP >= 150;
-                if (['F', 'G'].includes(n)) return totalXP >= 250;
-                return true; // A, B, C always allowed
-            });
-        });
-
-        // 3. Enforce Timer Limits (Time Lord requires 3000)
-        if (totalXP < 3000) {
-            setSecondsPerNote(s => Math.max(3, s));
-        }
-
-    }, [totalXP, proMode]);
 
     // TRIAD HUNT STATE
     const [triadKey, setTriadKey] = useState('A-Major');
@@ -386,92 +337,23 @@ export default function Fretboard() {
 
     // --- MEMORY GAME LOGIC ---
 
-    const failMemoryGame = () => {
-        if (timerRef.current) cancelAnimationFrame(timerRef.current);
 
-        // Deduct Life & Question
-        if (livesRef.current > 1) {
-            setLives(l => l - 1);
-            setStreak(0);
-            setFeedbackMsg('TIME UP! ❤️ LOST');
-            playFail();
-
-            // Check Round End
-            setQuestionsLeft(prev => {
-                const next = prev - 1;
-                if (next <= 0) {
-                    stopMemoryGame(true); // Survived!
-                } else {
-                    setTimeout(() => nextMemoryTarget(), 1500);
-                }
-                return next;
-            });
-
-        } else {
-            // Game Over (Dead)
-            setLives(0);
-            setQuestionsLeft(q => q - 1);
-            setMemoryGameOver(true);
-            playFail();
-            if (timerRef.current) cancelAnimationFrame(timerRef.current);
-        }
-    };
-
-    const startMemoryTimer = () => {
-        startTimeRef.current = Date.now();
-        const duration = secondsPerNote * 1000;
-
-        const loop = () => {
-            const now = Date.now();
-            const elapsed = now - startTimeRef.current;
-            const pct = Math.min((elapsed / duration) * 100, 100);
-
-            setTimerProgress(pct);
-
-            if (pct >= 100) {
-                failMemoryGame();
-            } else {
-                timerRef.current = requestAnimationFrame(loop);
-            }
-        };
-
-        if (timerRef.current) cancelAnimationFrame(timerRef.current);
-        timerRef.current = requestAnimationFrame(loop);
-    };
 
     const startMemoryGame = () => {
         setMemoryGameActive(true);
-        setMemoryGameOver(false); // Reset GO state
+        setMemoryGameOver(false);
         setScore(0);
-        setSessionXP(0); // Reset Session XP
-        setQuestionsLeft(10); // Reset Questions
-        setLives(3); // Always reset lives on full new start? Yes.
-        setStreak(0);
         setFeedbackMsg('');
-        setTimerProgress(0);
         nextMemoryTarget();
     };
 
     const stopMemoryGame = (finished = false) => {
-        if (timerRef.current) cancelAnimationFrame(timerRef.current);
-
-        // Check High Score
-        if (score > highScore) {
-            setHighScore(score);
-        }
-
-        if (finished) {
-            setMemoryGameOver(true);
-        } else {
-            setMemoryGameActive(false);
-            setMemoryTarget(null);
-            setRevealed({});
-            setTimerProgress(0);
-        }
+        setMemoryGameActive(false);
+        setMemoryTarget(null);
+        setRevealed({});
     };
 
     const nextMemoryTarget = () => {
-        // Build pool of valid positions based on settings
         const validPositions = [];
 
         memoryAllowedStrings.forEach(sIndex => {
@@ -493,175 +375,23 @@ export default function Fretboard() {
         const randomPos = validPositions[Math.floor(Math.random() * validPositions.length)];
         setMemoryTarget(randomPos);
         setRevealed({});
-
-        // Reset Timer
-        startMemoryTimer();
     };
-
-
 
     const handleMemoryGuess = (guessedNote, e) => {
         if (!memoryTarget) return;
 
         if (guessedNote === memoryTarget.note) {
             // Correct!
-            // playWinMelody(); Removed in favor of Coin Sound
-
-            // Decrement Questions
-            const nextQ = questionsLeft - 1;
-            setQuestionsLeft(nextQ);
-
-            // Calculate Score with Streak Multiplier
-            setStreak(prevStreak => {
-                const newStreak = prevStreak + 1;
-                const streakMultiplier = Math.floor(newStreak / 5) + 1;
-
-                // Difficulty / Cheese Logic
-                const noteCount = memoryAllowedNotes.length;
-                const stringCount = memoryAllowedStrings.length;
-                const time = Math.max(secondsPerNote, 1);
-                const isCheese = noteCount < 2;
-
-                // NERFED BALANCED FORMULA (Matches Menu)
-                const stringFactor = 0.5 + (0.5 * (stringCount / 6));
-                const noteFactor = 0.5 + (0.5 * (noteCount / 12));
-                // Time Factor: 1s -> 3x, 3s -> 1x, 10s -> 0.3x
-                const timeFactor = 3 / Math.max(time, 1);
-
-                let difficultyMult = stringFactor * noteFactor * timeFactor;
-                if (isCheese) difficultyMult = -2.0;
-
-                // Base XP = 5 * Streak
-                let xpGain = Math.ceil((5 * streakMultiplier) * difficultyMult);
-                if (!isCheese && xpGain < 1) xpGain = 1;
-
-                setScore(s => s + 1); // Session Score increases (you got it right)
-                setSessionXP(s => s + xpGain); // Track Session XP
-                setTotalXP(xp => Math.max(0, xp + xpGain)); // Global XP drains or grows
-
-                // DIAMOND ANIMATION (Juice!) 💎
-                if (e && xpGain > 0 && !isCheese) {
-                    playCoinSound();
-                    const targetRect = xpRef.current?.getBoundingClientRect();
-                    if (targetRect) {
-                        const startX = e.clientX;
-                        const startY = e.clientY;
-                        // Target center of XP container
-                        const endX = targetRect.left + (targetRect.width / 2);
-                        const endY = targetRect.top + (targetRect.height / 2);
-
-                        // Amount based on XP (cap at 5)
-                        const count = Math.min(5, Math.max(1, Math.ceil(xpGain / 5))); // 1 diamond per 5 XP
-                        const newDiamonds = [];
-
-                        for (let i = 0; i < count; i++) {
-                            newDiamonds.push({
-                                id: Date.now() + Math.random() + i,
-                                type: 'gain',
-                                startX, startY, endX, endY,
-                                delay: i * 80
-                            });
-                        }
-                        setDiamonds(prev => [...prev, ...newDiamonds]);
-
-                        // Cleanup
-                        setTimeout(() => {
-                            setDiamonds(prev => prev.filter(d => !newDiamonds.find(nd => nd.id === d.id)));
-                        }, 1000 + (count * 80));
-                    }
-                }
-
-                // HEALING MECHANIC: Every 5 streak = +1 Life (Max 5)
-                if (newStreak % 5 === 0) {
-                    setLives(l => {
-                        if (l < 5) return l + 1;
-                        return l;
-                    });
-                    setFeedbackMsg(`STREAK ${newStreak}! ${xpGain >= 0 ? '+' : ''}${xpGain} XP & ❤️ HEALED!`);
-                } else {
-                    const sign = xpGain >= 0 ? '+' : '';
-                    setFeedbackMsg(streakMultiplier > 1
-                        ? `CORRECT! ${sign}${xpGain} XP (Streak x${streakMultiplier})`
-                        : `CORRECT! ${sign}${xpGain} XP`
-                    );
-                }
-
-                return newStreak;
-            });
-
-            if (timerRef.current) cancelAnimationFrame(timerRef.current);
+            setScore(s => s + 1);
+            setFeedbackMsg('CORRECT!');
+            playCoinSound();
             setTimeout(() => {
                 setFeedbackMsg('');
-                if (nextQ <= 0) {
-                    stopMemoryGame(true); // Victory (Round Complete)
-                } else {
-                    nextMemoryTarget();
-                }
+                nextMemoryTarget();
             }, 500);
         } else {
-            // Wrong
-            // playFail(); Removed in favor of Crash Sound
-            setStreak(0); // Reset streak
-
-            // Calculate XP Loss
-            const noteCount = memoryAllowedNotes.length;
-            const stringCount = memoryAllowedStrings.length;
-            const time = Math.max(secondsPerNote, 1);
-            // Difficulty Factor (Nerfed)
-            const stringFactor = 0.5 + (0.5 * (stringCount / 6));
-            const noteFactor = 0.5 + (0.5 * (noteCount / 12));
-            const timeFactor = 3 / Math.max(time, 1);
-            const difficultyMult = stringFactor * noteFactor * timeFactor;
-
-            // Loss = Base (5) * Difficulty.
-            const xpLoss = Math.max(1, Math.ceil(5 * difficultyMult));
-            setTotalXP(xp => Math.max(0, xp - xpLoss));
-            setSessionXP(s => s - xpLoss); // Deduct from Session XP
-
-            // DIAMOND LOSS ANIMATION 💔
-            playThunderSound();
-            const targetRect = xpRef.current?.getBoundingClientRect();
-            if (targetRect) {
-                // Start at XP indicator
-                const startX = targetRect.left + (targetRect.width / 2);
-                const startY = targetRect.top + (targetRect.height / 2);
-
-                const count = Math.min(5, Math.ceil(xpLoss / 5)); // 1 diamond per 5 XP lost
-                const lostDiamonds = [];
-
-                for (let i = 0; i < count; i++) {
-                    lostDiamonds.push({
-                        id: Date.now() + Math.random() + i,
-                        type: 'loss',
-                        startX, startY,
-                        driftX: (Math.random() - 0.5) * 100, // Drift left/right
-                        delay: i * 50
-                    });
-                }
-                setDiamonds(prev => [...prev, ...lostDiamonds]);
-
-                setTimeout(() => {
-                    setDiamonds(prev => prev.filter(d => !lostDiamonds.find(ld => ld.id === d.id)));
-                }, 1000 + (count * 50));
-            }
-
-            if (livesRef.current > 1) {
-                setLives(l => l - 1);
-                setFeedbackMsg(`NOPE! It was ${memoryTarget.note} (-${xpLoss} XP)`);
-                if (timerRef.current) cancelAnimationFrame(timerRef.current);
-
-                // Check Round End
-                if (nextQ <= 0) {
-                    stopMemoryGame(true); // Survived with Lives!
-                } else {
-                    setTimeout(() => nextMemoryTarget(), 1500);
-                }
-            } else {
-                setLives(0);
-                setMemoryGameOver(true); // Trigger Game Over Screen
-                playFail();
-                if (timerRef.current) cancelAnimationFrame(timerRef.current);
-            }
+            setFeedbackMsg('TRY AGAIN');
+            playFail();
         }
     };
 
@@ -1059,8 +789,7 @@ export default function Fretboard() {
     };
 
     const handleNoteInteraction = (stringIndex, fretIndex, note) => {
-        if (activeGameMode === 'memory') {
-            if (!memoryGameActive) return; // Wait for start
+        if (activeGameMode === 'memory' && memoryGameActive) {
             setMemoryTarget({ s: stringIndex, f: fretIndex, note });
         } else if (activeGameMode === 'triad-hunt') {
             checkTriadClick(stringIndex, fretIndex);
@@ -1746,371 +1475,133 @@ export default function Fretboard() {
             )}
 
             {/* MEMORY GAME HUD */}
+            {/* MEMORY GAME HUD */}
             {activeGameMode === 'memory' && (
-                <div className="game-hud" style={{ flexDirection: 'column', gap: '15px', marginBottom: '50px', background: 'rgba(59, 130, 246, 0.1)', padding: '20px', borderRadius: '12px', border: '1px solid #3b82f6' }}>
+                <div className="game-hud" style={{ width: '100%', flexDirection: 'column', gap: '8px', marginBottom: '15px', background: 'rgba(30, 41, 59, 0.5)', padding: '10px', borderRadius: '12px', border: '1px solid #3b82f6' }}>
 
-                    {!memoryGameActive ? (
-                        <div style={{ width: '100%' }}>
-                            {/* HEADER: Title + Local XP */}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid rgba(59, 130, 246, 0.3)', paddingBottom: '10px' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                    <h2 style={{ margin: 0, color: '#60a5fa', fontSize: '1.5rem', letterSpacing: '1px' }}>NOTE HUNT</h2>
-                                </div>
+                    {/* ROW 1: NOTES SELECTOR */}
+                    <div className="flex flex-col gap-1 items-center w-full">
+                        <div className="flex items-center gap-2 sm:gap-4 w-full max-w-3xl justify-center">
+                            {/* LABEL */}
+                            <div className="text-[0.6rem] sm:text-xs font-bold text-slate-500 w-10 sm:w-14 text-right shrink-0">NOTES</div>
 
-                                {/* LOCAL XP DISPLAY */}
-                                <div ref={xpRef} style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(15, 23, 42, 0.6)', padding: '6px 15px', borderRadius: '20px', border: '1px solid #3b82f6' }}>
-                                    <div style={{ fontSize: '0.7rem', color: '#93c5fd', fontWeight: 700, letterSpacing: '1px', marginRight: '5px' }}>XP</div>
-                                    <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#fff', textShadow: '0 0 10px rgba(59, 130, 246, 0.5)' }}>💎 {totalXP}</div>
-                                </div>
+                            {/* BUTTONS */}
+                            <div className="flex flex-wrap justify-center gap-0.5 sm:gap-2">
+                                {['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'].map(note => (
+                                    <button
+                                        key={note}
+                                        onPointerDown={(e) => {
+                                            e.preventDefault();
+                                            e.currentTarget.releasePointerCapture(e.pointerId); // Allow smooth dragging
+                                            const isActive = memoryAllowedNotes.includes(note);
+                                            const action = isActive ? 'remove' : 'add';
+                                            dragSelectRef.current = { active: true, type: 'note', action };
+
+                                            // Immediate update
+                                            if (action === 'add') setMemoryAllowedNotes(prev => [...prev, note]);
+                                            else setMemoryAllowedNotes(prev => prev.filter(n => n !== note));
+                                        }}
+                                        onPointerEnter={() => {
+                                            const { active, type, action } = dragSelectRef.current;
+                                            if (active && type === 'note') {
+                                                if (action === 'add' && !memoryAllowedNotes.includes(note)) {
+                                                    setMemoryAllowedNotes(prev => [...prev, note]);
+                                                } else if (action === 'remove' && memoryAllowedNotes.includes(note)) {
+                                                    setMemoryAllowedNotes(prev => prev.filter(n => n !== note));
+                                                }
+                                            }
+                                        }}
+                                        className={`
+                                            w-[1.4rem] h-7 sm:w-10 sm:h-10 rounded-md font-bold text-[0.55rem] sm:text-sm transition-all
+                                            flex items-center justify-center border cursor-pointer select-none touch-none
+                                            ${memoryAllowedNotes.includes(note)
+                                                ? 'bg-blue-500 text-white border-blue-500 shadow-lg shadow-blue-500/50 scale-105 z-10'
+                                                : 'bg-slate-800 text-slate-400 border-slate-600 hover:border-slate-400 hover:text-white'}
+                                        `}
+                                    >
+                                        {note}
+                                    </button>
+                                ))}
                             </div>
+                        </div>
+                    </div>
 
-                            <div style={{ textAlign: 'center' }}>
+                    <div className="flex justify-center flex-col items-center gap-[5px] sm:gap-4 mt-[5px] sm:mt-4">
 
-                                {/* MULTIPLIER / PENALTY DISPLAY */}
-                                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', alignItems: 'center' }}>
-                                    {(() => {
-                                        const notesCount = memoryAllowedNotes.length;
-                                        const stringsCount = memoryAllowedStrings.length;
-                                        const time = Math.max(secondsPerNote, 1);
+                        {/* ROW 2: STRINGS SELECTOR */}
+                        <div className="flex items-center gap-2 sm:gap-4 w-full max-w-3xl justify-center">
+                            {/* LABEL */}
+                            <div className="text-[0.6rem] sm:text-xs font-bold text-slate-500 w-10 sm:w-14 text-right shrink-0">STRINGS</div>
 
-                                        // Cheese Detection: < 2 Notes (1 note = answer is obvious)
-                                        const isCheese = notesCount < 2;
+                            <div className="grid grid-cols-6 gap-0.5 sm:gap-1 w-auto min-w-[180px] max-w-[220px] sm:min-w-[300px] sm:max-w-[400px]">
+                                {[5, 4, 3, 2, 1, 0].map((stringIndex, i) => (
+                                    <button
+                                        key={stringIndex}
+                                        onPointerDown={(e) => {
+                                            e.preventDefault();
+                                            e.currentTarget.releasePointerCapture(e.pointerId);
+                                            const isActive = memoryAllowedStrings.includes(stringIndex);
+                                            const action = isActive ? 'remove' : 'add';
+                                            dragSelectRef.current = { active: true, type: 'string', action };
 
-                                        // NERFED BALANCED FORMULA
-                                        const stringFactor = 0.5 + (0.5 * (stringsCount / 6));
-                                        const noteFactor = 0.5 + (0.5 * (notesCount / 12));
-                                        // Time Factor: 1s -> 3x, 3s -> 1x, 10s -> 0.3x
-                                        const timeFactor = 3 / Math.max(time, 1);
-
-                                        let xpVal = Math.max(1, Math.ceil(5 * stringFactor * noteFactor * timeFactor));
-                                        if (isCheese) xpVal = -10;
-
-                                        return (
-                                            <div style={{
-                                                background: isCheese ? 'rgba(239, 68, 68, 0.2)' : '#1e293b',
-                                                padding: '8px 20px', borderRadius: '20px',
-                                                border: `1px solid ${isCheese ? '#ef4444' : xpVal < 3 ? '#f59e0b' : '#3b82f6'}`,
-                                                color: isCheese ? '#ef4444' : xpVal < 3 ? '#f59e0b' : '#3b82f6',
-                                                fontWeight: 'bold',
-                                                display: 'flex', alignItems: 'center', gap: '8px',
-                                                boxShadow: isCheese ? '0 0 15px rgba(239, 68, 68, 0.3)' : 'none'
-                                            }}>
-                                                <span style={{ fontSize: '1.2rem' }}>{isCheese ? '⛈️' : xpVal < 3 ? '🌱' : '⚡'}</span>
-                                                <span>
-                                                    {isCheese ? 'XP DRAIN (-10 XP per answer)' : `+${xpVal} XP per correct answer`}
-                                                </span>
-                                            </div>
-                                        );
-                                    })()}
-                                </div>
-
-                                <p style={{ color: '#cbd5e1', marginBottom: '20px' }}>Identify the highlighted note. Configure your drill below.</p>
-
-                                {/* SETTINGS CONTAINER */}
-                                <div style={{ display: 'flex', flexDirection: 'row', gap: '50px', marginBottom: '25px', justifyContent: 'center', alignItems: 'flex-start', flexWrap: 'wrap', width: '100%' }}>
-
-                                    {/* TIMER SETTING */}
-                                    <div style={{ flex: '0 0 auto', width: 'fit-content', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                                        <div style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '10px' }}>Timer (Sec)</div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexGrow: 1 }}>
-                                            <input
-                                                type="range"
-                                                min={(!proMode && totalXP < 3000) ? 3 : 1}
-                                                max="10" step="1"
-                                                value={Math.max((!proMode && totalXP < 3000) ? 3 : 1, secondsPerNote)}
-                                                onChange={(e) => setSecondsPerNote(Number(e.target.value))}
-                                                style={{ width: '100px', accentColor: '#3b82f6' }}
-                                            />
-                                            <span style={{ color: '#f8fafc', fontWeight: 'bold', minWidth: '30px' }}>{secondsPerNote}s</span>
-                                        </div>
-                                        {!proMode && totalXP < 3000 && (
-                                            <div style={{ fontSize: '0.65rem', color: '#64748b', marginTop: '5px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                <span>🔒</span> <span>1s unlocked at 3000 XP</span>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* STRING SELECTION */}
-                                    <div style={{ flex: '0 0 auto', width: 'fit-content' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                            <div style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: 'bold', textTransform: 'uppercase' }}>Active Strings</div>
-                                            <div style={{ display: 'flex', gap: '5px' }}>
-                                                <button className="btn" style={{ padding: '2px 8px', fontSize: '0.7rem' }} onClick={() => setMemoryAllowedStrings([0, 1, 2, 3, 4, 5])}>ALL</button>
-                                                <button className="btn" style={{ padding: '2px 8px', fontSize: '0.7rem' }} onClick={() => setMemoryAllowedStrings([])}>OFF</button>
-                                            </div>
-                                        </div>
-                                        <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-start' }}>
-                                            {['Low E', 'A', 'D', 'G', 'B', 'High E'].map((label, idx) => {
-                                                // Map visual label to logical index (Low E is 0 in our data)
-                                                const isActive = memoryAllowedStrings.includes(idx);
-
-                                                // PROGRESSION LOCK LOGIC
-                                                let locked = false;
-                                                let reqXP = 0;
-                                                if (!proMode) {
-                                                    if (idx === 1) { locked = totalXP < 100; reqXP = 100; }
-                                                    if (idx === 2) { locked = totalXP < 300; reqXP = 300; }
-                                                    if (idx === 3) { locked = totalXP < 600; reqXP = 600; }
-                                                    if (idx === 4) { locked = totalXP < 1000; reqXP = 1000; }
-                                                    if (idx === 5) { locked = totalXP < 1500; reqXP = 1500; }
+                                            // Immediate update
+                                            if (action === 'add') setMemoryAllowedStrings(prev => [...prev, stringIndex]);
+                                            else setMemoryAllowedStrings(prev => prev.filter(s => s !== stringIndex));
+                                        }}
+                                        onPointerEnter={() => {
+                                            const { active, type, action } = dragSelectRef.current;
+                                            if (active && type === 'string') {
+                                                if (action === 'add' && !memoryAllowedStrings.includes(stringIndex)) {
+                                                    setMemoryAllowedStrings(prev => [...prev, stringIndex]);
+                                                } else if (action === 'remove' && memoryAllowedStrings.includes(stringIndex)) {
+                                                    setMemoryAllowedStrings(prev => prev.filter(s => s !== stringIndex));
                                                 }
+                                            }
+                                        }}
+                                        className={`
+                                            h-7 w-full sm:h-10 rounded-md font-bold text-[0.6rem] sm:text-sm transition-all
+                                            flex items-center justify-center border cursor-pointer select-none touch-none
+                                        `}
+                                        style={{
+                                            backgroundColor: memoryAllowedStrings.includes(stringIndex) ? '#3b82f6' : '#1e293b',
+                                            color: memoryAllowedStrings.includes(stringIndex) ? '#fff' : '#94a3b8',
+                                            borderColor: memoryAllowedStrings.includes(stringIndex) ? '#3b82f6' : '#475569',
+                                            opacity: memoryAllowedStrings.includes(stringIndex) ? 1 : 0.5,
+                                            gridColumn: i + 1,
+                                            gridRow: 1
+                                        }}
+                                    >
+                                        {6 - stringIndex}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
 
-                                                return (
-                                                    <button
-                                                        key={idx}
-                                                        className="btn"
-                                                        disabled={locked}
-                                                        onClick={() => {
-                                                            if (locked) return;
-                                                            setMemoryAllowedStrings(prev =>
-                                                                prev.includes(idx) ? prev.filter(s => s !== idx) : [...prev, idx]
-                                                            );
-                                                        }}
-                                                        style={{
-                                                            padding: '6px 10px',
-                                                            fontSize: '0.8rem',
-                                                            whiteSpace: 'nowrap',
-                                                            backgroundColor: locked ? '#1e293b' : (isActive ? '#facc15' : '#334155'),
-                                                            color: locked ? '#475569' : (isActive ? '#0f172a' : '#94a3b8'),
-                                                            borderColor: locked ? '#334155' : (isActive ? '#facc15' : '#475569'),
-                                                            opacity: locked ? 0.5 : (isActive ? 1 : 0.8),
-                                                            cursor: locked ? 'not-allowed' : 'pointer',
-                                                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                                                            minWidth: '50px'
-                                                        }}
-                                                    >
-                                                        {locked ? (
-                                                            <>
-                                                                <span>🔒</span>
-                                                                <span style={{ fontSize: '0.55rem', marginTop: '2px' }}>{reqXP} XP</span>
-                                                            </>
-                                                        ) : label}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                        {memoryAllowedStrings.length === 0 && <div style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '5px' }}>Select at least one string!</div>}
-                                    </div>
-
-                                    {/* NOTE SELECTION */}
-                                    <div style={{ flex: '1 0 auto', maxWidth: '600px' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                            <div style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: 'bold', textTransform: 'uppercase' }}>Active Notes</div>
-                                            <div style={{ display: 'flex', gap: '5px' }}>
-                                                <button className="btn" style={{ padding: '2px 8px', fontSize: '0.7rem' }} onClick={() => setMemoryAllowedNotes(NOTES)}>ALL</button>
-                                                <button className="btn" style={{ padding: '2px 8px', fontSize: '0.7rem' }} onClick={() => setMemoryAllowedNotes(['A', 'B', 'C', 'D', 'E', 'F', 'G'])}>NATURALS</button>
-                                                <button className="btn" style={{ padding: '2px 8px', fontSize: '0.7rem' }} onClick={() => setMemoryAllowedNotes([])}>OFF</button>
-                                            </div>
-                                        </div>
-
-                                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'nowrap', overflowX: 'auto', paddingBottom: '5px' }}>
-                                            {['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'].map(note => {
-                                                const isActive = memoryAllowedNotes.includes(note);
-
-                                                // LOCK LOGIC
-                                                let locked = false;
-                                                let reqXP = 0;
-
-                                                if (!proMode) {
-                                                    if (note.includes('#')) {
-                                                        locked = totalXP < 2000;
-                                                        reqXP = 2000;
-                                                    } else if (['D', 'E'].includes(note)) {
-                                                        locked = totalXP < 150;
-                                                        reqXP = 150;
-                                                    } else if (['F', 'G'].includes(note)) {
-                                                        locked = totalXP < 250;
-                                                        reqXP = 250;
-                                                    }
-                                                }
-
-                                                return (
-                                                    <button
-                                                        key={note}
-                                                        disabled={locked}
-                                                        onClick={() => {
-                                                            if (locked) return;
-                                                            setMemoryAllowedNotes(prev =>
-                                                                prev.includes(note) ? prev.filter(n => n !== note) : [...prev, note]
-                                                            );
-                                                        }}
-                                                        style={{
-                                                            minWidth: '40px', height: '40px', flexShrink: 0,
-                                                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                                                            borderRadius: '6px',
-                                                            backgroundColor: locked ? '#1e293b' : (isActive ? '#60a5fa' : '#334155'),
-                                                            color: locked ? '#475569' : (isActive ? '#fff' : '#94a3b8'),
-                                                            border: locked ? '1px dashed #334155' : 'none',
-                                                            cursor: locked ? 'not-allowed' : 'pointer',
-                                                            fontWeight: 'bold',
-                                                            fontSize: '0.9rem',
-                                                            position: 'relative'
-                                                        }}
-                                                    >
-                                                        {locked ? (
-                                                            <>
-                                                                <span style={{ fontSize: '0.8rem' }}>🔒</span>
-                                                                <span style={{ fontSize: '0.45rem', marginTop: '1px' }}>{reqXP}</span>
-                                                            </>
-                                                        ) : note}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                        {memoryAllowedNotes.length === 0 && <div style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '5px' }}>Select at least one note!</div>}
-                                    </div>
-                                </div>
-
+                        {/* ROW 3: CONTROLS */}
+                        <div className="mt-2 flex gap-4 items-center">
+                            {!memoryGameActive ? (
                                 <button
-                                    className="btn"
                                     onClick={startMemoryGame}
-                                    disabled={memoryAllowedStrings.length === 0 || memoryAllowedNotes.length === 0}
-                                    style={{
-                                        backgroundColor: '#3b82f6',
-                                        color: '#fff',
-                                        fontWeight: 'bold',
-                                        fontSize: '1.2rem',
-                                        padding: '10px 30px',
-                                        opacity: (memoryAllowedStrings.length === 0 || memoryAllowedNotes.length === 0) ? 0.5 : 1,
-                                        cursor: (memoryAllowedStrings.length === 0 || memoryAllowedNotes.length === 0) ? 'not-allowed' : 'pointer'
-                                    }}
+                                    className="h-9 px-6 sm:h-12 sm:px-8 rounded-lg font-bold text-xs sm:text-base bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 hover:bg-emerald-400 hover:scale-105 transition-all"
                                 >
                                     START HUNT
                                 </button>
-                            </div>
+                            ) : (
+                                <div className="flex gap-4 items-center">
+                                    <div className="flex flex-col items-center">
+                                        <span className="text-[0.6rem] sm:text-xs text-slate-400 font-bold tracking-widest">FOUND</span>
+                                        <span className="text-xl sm:text-2xl font-black text-amber-400">{score}</span>
+                                    </div>
+                                    <button
+                                        onClick={() => stopMemoryGame(false)}
+                                        className="h-9 px-4 sm:h-12 sm:px-6 rounded-lg font-bold text-xs sm:text-base bg-slate-700 text-slate-300 border border-slate-600 hover:bg-slate-600 transition-all"
+                                    >
+                                        STOP
+                                    </button>
+                                </div>
+                            )}
                         </div>
-                    ) : (
-                        memoryGameOver ? (
-                            <div style={{ position: 'absolute', inset: 0, zIndex: 50, display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(5px)', borderRadius: '20px' }}>
-                                <div style={{
-                                    textAlign: 'center', padding: '40px', background: '#0f172a', borderRadius: '20px',
-                                    border: `2px solid ${lives > 0 ? '#22c55e' : '#ef4444'}`,
-                                    boxShadow: lives > 0 ? '0 0 50px rgba(34, 197, 94, 0.4)' : '0 0 50px rgba(239, 68, 68, 0.4)',
-                                    animation: 'scaleIn 0.3s ease-out'
-                                }}>
-                                    <style>{`@keyframes scaleIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }`}</style>
-                                    <h1 style={{
-                                        fontSize: '3.5rem', margin: '0 0 10px',
-                                        color: lives > 0 ? '#22c55e' : '#ef4444',
-                                        textShadow: lives > 0 ? '0 0 30px rgba(34, 197, 94, 0.6)' : '0 0 30px rgba(239, 68, 68, 0.6)',
-                                        letterSpacing: '4px'
-                                    }}>
-                                        {lives > 0 ? 'VICTORY' : 'GAME OVER'}
-                                    </h1>
-
-                                    <div style={{ fontSize: '5rem', marginBottom: '10px' }}>{lives > 0 ? '🎉' : '💀'}</div>
-
-                                    <div style={{ fontSize: '1.5rem', marginBottom: '40px', color: '#94a3b8', letterSpacing: '2px', fontWeight: '300' }}>
-                                        SESSION XP: <span style={{ color: '#c084fc', fontWeight: '800', fontSize: '2.5rem', textShadow: '0 0 20px rgba(192, 132, 252, 0.4)' }}>{sessionXP >= 0 ? '+' : ''}{sessionXP}</span>
-                                    </div>
-                                    <div style={{ display: 'flex', gap: '20px', justifyContent: 'center' }}>
-                                        <button
-                                            className="btn"
-                                            onClick={startMemoryGame}
-                                            style={{ backgroundColor: '#22c55e', color: '#fff', fontSize: '1.2rem', padding: '15px 40px', fontWeight: 'bold' }}
-                                        >
-                                            TRY AGAIN 🔄
-                                        </button>
-                                        <button
-                                            className="btn"
-                                            onClick={() => stopMemoryGame(false)}
-                                            style={{ backgroundColor: '#475569', color: '#fff', fontSize: '1.2rem', padding: '15px 40px', fontWeight: 'bold' }}
-                                        >
-                                            MENU 🏠
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        ) : (
-                            <div style={{ textAlign: 'center', width: '100%' }}>
-
-                                {/* LIVES & STREAK */}
-                                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '30px', marginBottom: '20px' }}>
-                                    {/* Lives */}
-                                    <div style={{ display: 'flex', gap: '5px' }}>
-                                        {[...Array(5)].map((_, i) => (
-                                            <span key={i} style={{ fontSize: '1.5rem', filter: i < lives ? 'none' : 'grayscale(100%) opacity(0.2)', transition: 'all 0.3s' }}>❤️</span>
-                                        ))}
-                                    </div>
-                                    {/* Streak */}
-                                    <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: streak >= 5 ? '#f59e0b' : '#64748b', textShadow: streak >= 10 ? '0 0 10px rgba(245, 158, 11, 0.5)' : 'none', transition: 'all 0.3s' }}>
-                                        {streak >= 5 ? `🔥 x${Math.floor(streak / 5) + 1}` : `Streak: ${streak}`}
-                                    </div>
-                                </div>
-
-                                {/* PIE TIMER & SCORE */}
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '40px', marginBottom: '20px' }}>
-                                    {/* SESSION XP (Animation Target) */}
-                                    <div ref={xpRef} style={{ textAlign: 'center' }}>
-                                        <div style={{ fontSize: '0.8rem', color: '#93c5fd', fontWeight: 600 }}>SESSION XP</div>
-                                        <div style={{ fontSize: '2rem', fontWeight: 800, color: '#facc15', textShadow: '0 0 15px rgba(250, 204, 21, 0.4)' }}>{sessionXP >= 0 ? '+' : ''}{sessionXP}</div>
-                                    </div>
-
-                                    {/* PIE TIMER */}
-                                    {/* PIE TIMER + Q COUNT */}
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-                                        <div style={{
-                                            width: '70px',
-                                            height: '70px',
-                                            borderRadius: '50%',
-                                            background: `conic-gradient(#ef4444 ${timerProgress}%, #3b82f6 0)`,
-                                            position: 'relative',
-                                            boxShadow: '0 0 15px rgba(59, 130, 246, 0.3)'
-                                        }}>
-                                            <div style={{
-                                                position: 'absolute',
-                                                top: '6px', left: '6px', right: '6px', bottom: '6px',
-                                                background: '#1e293b',
-                                                borderRadius: '50%',
-                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                fontWeight: '800',
-                                                fontSize: '1.2rem',
-                                                color: '#f8fafc'
-                                            }}>
-                                                {Math.ceil((100 - timerProgress) / 100 * secondsPerNote)}
-                                            </div>
-                                        </div>
-                                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 'bold' }}>
-                                            {questionsLeft} LEFT
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div style={{ textAlign: 'center', color: '#93c5fd', minHeight: '1.5em', marginBottom: '20px', fontSize: '1.1rem', fontWeight: 'bold' }}>{feedbackMsg}</div>
-
-                                {/* NOTE BUTTONS */}
-                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center', margin: '0 auto' }}>
-                                    {['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'].map(n => (
-                                        <button
-                                            key={n}
-                                            className="btn"
-                                            onClick={(e) => handleMemoryGuess(n, e)}
-                                            style={{
-                                                minWidth: '45px',
-                                                height: '45px',
-                                                fontSize: '1rem',
-                                                fontWeight: 'bold',
-                                                backgroundColor: '#1e293b',
-                                                color: '#f8fafc',
-                                                border: '1px solid #475569',
-                                                boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
-                                            }}
-                                        >
-                                            {n}
-                                        </button>
-                                    ))}
-                                </div>
-
-                                <button
-                                    className="btn"
-                                    onClick={stopMemoryGame}
-                                    style={{ marginTop: '20px', borderColor: '#ef4444', color: '#ef4444' }}
-                                >
-                                    STOP GAME
-                                </button>
-                            </div>
-                        )
-                    )}
+                    </div>
                 </div>
             )}
 
@@ -2472,7 +1963,7 @@ export default function Fretboard() {
                                                         style={{
                                                             gridColumn: fretIndex + 1,
                                                             gridRow: visualRow,
-                                                            pointerEvents: (memoryGameActive && !memoryAllowedStrings.includes(stringIndex)) ? 'none' : 'auto',
+                                                            pointerEvents: (activeGameMode === 'memory' && memoryGameActive && !memoryAllowedStrings.includes(stringIndex)) ? 'none' : 'auto',
                                                             touchAction: 'none' // Critical for Drag-To-Play on mobile
                                                         }}
                                                         onPointerDown={(e) => {
@@ -2511,10 +2002,12 @@ export default function Fretboard() {
                                                                     opacity: 1
                                                                 } :
                                                                     (isMenuPreview && !revealedState ? {
-                                                                        backgroundColor: 'rgba(59, 130, 246, 0.15)',
-                                                                        borderColor: 'rgba(96, 165, 250, 0.4)',
-                                                                        color: 'rgba(255, 255, 255, 0.7)',
-                                                                        boxShadow: 'none'
+                                                                        backgroundColor: '#3b82f6',
+                                                                        borderColor: '#60a5fa',
+                                                                        color: '#ffffff',
+                                                                        boxShadow: '0 0 5px rgba(59, 130, 246, 0.5)',
+                                                                        fontWeight: 'bold',
+                                                                        opacity: 0.9
                                                                     } : {})
                                                             }
                                                         >
@@ -2624,31 +2117,7 @@ export default function Fretboard() {
                     })()}
                 </div>
             </div>
-            {/* FLYING DIAMONDS */}
-            {
-                diamonds.map(d => (
-                    <div
-                        key={d.id}
-                        style={{
-                            position: 'fixed',
-                            left: d.startX,
-                            top: d.startY,
-                            fontSize: '1.5rem',
-                            pointerEvents: 'none',
-                            zIndex: 9999,
-                            animation: d.type === 'loss'
-                                ? `fallDown 0.8s ease-in ${d.delay}ms forwards`
-                                : `flyToTarget 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) ${d.delay}ms forwards`,
-                            '--target-x': d.endX ? `${d.endX - d.startX}px` : '0px',
-                            '--target-y': d.endY ? `${d.endY - d.startY}px` : '0px',
-                            '--drift-x': d.driftX ? `${d.driftX}px` : '0px',
-                            filter: d.type === 'loss' ? 'grayscale(100%) opacity(0.8)' : 'none'
-                        }}
-                    >
-                        {d.type === 'loss' ? '💔' : '💎'}
-                    </div>
-                ))
-            }
+
 
         </div >
     );
