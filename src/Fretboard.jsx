@@ -1325,7 +1325,7 @@ export default function Fretboard() {
 
             {/* CHORD DESIGNER HUD */}
             {activeGameMode === 'chord-designer' && (
-                <div className="game-hud" style={{ flexDirection: 'column', gap: '8px', marginBottom: '15px', background: 'rgba(30, 41, 59, 0.5)', padding: '10px', borderRadius: '12px', border: '1px solid #f43f5e' }}>
+                <div className="game-hud" style={{ width: '100%', flexDirection: 'column', gap: '8px', marginBottom: '15px', background: 'rgba(30, 41, 59, 0.5)', padding: '10px', borderRadius: '12px', border: '1px solid #f43f5e' }}>
 
                     {/* ROW 1: ROOT (CIRCLE OF FIFTHS) */}
                     <div className="flex flex-col gap-1 items-center w-full">
