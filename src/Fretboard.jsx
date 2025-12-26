@@ -1481,12 +1481,12 @@ export default function Fretboard() {
 
                     {/* ROW 1: NOTES SELECTOR */}
                     <div className="flex flex-col gap-1 items-center w-full">
-                        <div className="flex items-center gap-2 sm:gap-4 w-full max-w-3xl justify-center">
+                        <div className="flex flex-col items-center gap-1 sm:gap-2 w-full max-w-3xl justify-center">
                             {/* LABEL */}
-                            <div className="text-[0.6rem] sm:text-xs font-bold text-slate-500 w-10 sm:w-14 text-right shrink-0">NOTES</div>
+                            <div className="text-[0.6rem] sm:text-xs font-bold text-slate-500 w-full text-center shrink-0">NOTES</div>
 
                             {/* BUTTONS */}
-                            <div className="flex flex-wrap justify-center gap-0.5 sm:gap-2">
+                            <div className="flex flex-wrap justify-center gap-1 sm:gap-2">
                                 {['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'].map(note => (
                                     <button
                                         key={note}
@@ -1512,7 +1512,7 @@ export default function Fretboard() {
                                             }
                                         }}
                                         className={`
-                                            w-[1.4rem] h-7 sm:w-10 sm:h-10 rounded-md font-bold text-[0.55rem] sm:text-sm transition-all
+                                            w-7 h-7 sm:w-10 sm:h-10 rounded-md font-bold text-[0.6rem] sm:text-sm transition-all
                                             flex items-center justify-center border cursor-pointer select-none touch-none
                                             ${memoryAllowedNotes.includes(note)
                                                 ? 'bg-blue-500 text-white border-blue-500 shadow-lg shadow-blue-500/50 scale-105 z-10'
@@ -1529,9 +1529,9 @@ export default function Fretboard() {
                     <div className="flex justify-center flex-col items-center gap-[5px] sm:gap-4 mt-[5px] sm:mt-4">
 
                         {/* ROW 2: STRINGS SELECTOR */}
-                        <div className="flex items-center gap-2 sm:gap-4 w-full max-w-3xl justify-center">
+                        <div className="flex flex-col items-center gap-1 sm:gap-2 w-full max-w-3xl justify-center">
                             {/* LABEL */}
-                            <div className="text-[0.6rem] sm:text-xs font-bold text-slate-500 w-10 sm:w-14 text-right shrink-0">STRINGS</div>
+                            <div className="text-[0.6rem] sm:text-xs font-bold text-slate-500 w-full text-center shrink-0">STRINGS</div>
 
                             <div className="grid grid-cols-6 gap-0.5 sm:gap-1 w-auto min-w-[180px] max-w-[220px] sm:min-w-[300px] sm:max-w-[400px]">
                                 {[5, 4, 3, 2, 1, 0].map((stringIndex, i) => (
@@ -1578,7 +1578,7 @@ export default function Fretboard() {
                         </div>
 
                         {/* ROW 3: CONTROLS */}
-                        <div className="mt-2 flex gap-4 items-center">
+                        <div className="mt-6 flex gap-4 items-center">
                             {!memoryGameActive ? (
                                 <button
                                     onClick={startMemoryGame}
