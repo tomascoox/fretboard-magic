@@ -1543,6 +1543,13 @@ export default function Fretboard({
                                 </button>
 
                                 <button
+                                    onClick={() => setCustomSelectedNotes([])}
+                                    className="px-4 py-2 rounded bg-amber-600/20 text-amber-300 text-xs font-bold hover:bg-amber-600/40 border border-amber-500/50"
+                                >
+                                    CLEAR
+                                </button>
+
+                                <button
                                     onClick={() => {
                                         if (customSelectedNotes.length > 0) {
                                             setIsCustomSelectionMode(false);
