@@ -245,6 +245,34 @@ export default function Fretboard({
     const [triadKey, setTriadKey] = useState('A-Major');
     const [triadSet, setTriadSet] = useState('top');
     const [triadGameMode, setTriadGameMode] = useState('current'); // 'current' or 'all'
+    const [userPresets, setUserPresets] = useState(() => {
+        try {
+            const saved = localStorage.getItem('fretboardUserPresets');
+            return saved ? JSON.parse(saved) : [];
+        } catch (e) { return []; }
+    });
+    const [isCreatingPreset, setIsCreatingPreset] = useState(false);
+    const [isDeletingPresets, setIsDeletingPresets] = useState(false);
+    const [newPresetName, setNewPresetName] = useState('');
+
+    useEffect(() => {
+        localStorage.setItem('fretboardUserPresets', JSON.stringify(userPresets));
+    }, [userPresets]);
+
+    const savePreset = () => {
+        if (!newPresetName.trim()) {
+            setIsCreatingPreset(false);
+            return;
+        }
+        const newPreset = {
+            id: Date.now().toString(),
+            name: newPresetName.toUpperCase(),
+            notes: [...customSelectedNotes]
+        };
+        setUserPresets(prev => [...prev, newPreset]);
+        setIsCreatingPreset(false);
+        setNewPresetName('');
+    };
     const [triadGameActive, setTriadGameActive] = useState(false);
     const [triadTarget, setTriadTarget] = useState(null); // { key, set, name, notes }
     const [triadTimeLeft, setTriadTimeLeft] = useState(60);
@@ -1588,6 +1616,74 @@ export default function Fretboard({
                                     >
                                         NATURALS
                                     </button>
+
+                                    {/* USER PRESETS */}
+                                    {userPresets.map(preset => (
+                                        <button
+                                            key={preset.id}
+                                            onClick={() => {
+                                                if (isDeletingPresets) {
+                                                    setUserPresets(prev => prev.filter(p => p.id !== preset.id));
+                                                } else {
+                                                    setCustomSelectedNotes(preset.notes);
+                                                }
+                                            }}
+                                            className={`px-2 py-1 rounded-full text-[0.65rem] font-bold transition-all ${isDeletingPresets
+                                                    ? 'bg-red-900/50 text-red-300 border border-red-500 hover:bg-red-800 animate-pulse'
+                                                    : 'bg-slate-700 text-slate-300 border border-slate-600 hover:bg-slate-600'
+                                                }`}
+                                        >
+                                            {preset.name} {isDeletingPresets && '×'}
+                                        </button>
+                                    ))}
+
+                                    {/* NEW PRESET INPUT OR BUTTON */}
+                                    {isCreatingPreset ? (
+                                        <input
+                                            autoFocus
+                                            value={newPresetName}
+                                            onChange={e => setNewPresetName(e.target.value.toUpperCase())}
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter') savePreset();
+                                                if (e.key === 'Escape') {
+                                                    setIsCreatingPreset(false);
+                                                    setNewPresetName('');
+                                                }
+                                            }}
+                                            onBlur={savePreset}
+                                            className="px-2 py-1 rounded-full bg-blue-900/50 text-blue-200 text-[0.65rem] font-bold border border-blue-500 w-24 outline-none text-center h-[26px]"
+                                            placeholder="NAME"
+                                        />
+                                    ) : (
+                                        <>
+                                            <button
+                                                onClick={() => {
+                                                    if (customSelectedNotes.length === 0) {
+                                                        alert("Select notes first!");
+                                                        return;
+                                                    }
+                                                    setIsCreatingPreset(true);
+                                                    setIsDeletingPresets(false); // Turn off delete mode if adding
+                                                }}
+                                                className="px-2 py-1 rounded-full bg-blue-600/20 text-blue-400 text-[0.65rem] font-bold hover:bg-blue-600/40 border border-blue-500/50 transition-colors"
+
+                                            >
+                                                + NEW PRESET
+                                            </button>
+
+                                            {userPresets.length > 0 && (
+                                                <button
+                                                    onClick={() => setIsDeletingPresets(!isDeletingPresets)}
+                                                    className={`px-2 py-1 rounded-full text-[0.65rem] font-bold border transition-colors ${isDeletingPresets
+                                                            ? 'bg-red-600 text-white border-red-500 shadow-lg shadow-red-500/20'
+                                                            : 'bg-slate-800 text-slate-500 border-slate-700 hover:text-red-400 hover:border-red-500/50'
+                                                        }`}
+                                                >
+                                                    {isDeletingPresets ? 'DONE' : 'DELETE'}
+                                                </button>
+                                            )}
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         </div>
