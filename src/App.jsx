@@ -18,6 +18,10 @@ function App() {
   const [totalXP, setTotalXP] = useState(() => parseInt(localStorage.getItem('fretboardXP') || '0'));
   useEffect(() => { localStorage.setItem('fretboardXP', totalXP); }, [totalXP]);
 
+  // Global Accidental Mode ('sharp' | 'flat')
+  const [accidentalMode, setAccidentalMode] = useState(() => localStorage.getItem('fretboardAccidentalMode') || 'sharp');
+  useEffect(() => { localStorage.setItem('fretboardAccidentalMode', accidentalMode); }, [accidentalMode]);
+
   return (
     <Layout
       activeGameMode={activeGameMode}
@@ -32,6 +36,8 @@ function App() {
       setFretCount={setFretCount}
       totalXP={totalXP}
       setTotalXP={setTotalXP}
+      accidentalMode={accidentalMode}
+      setAccidentalMode={setAccidentalMode}
     >
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '0' }}>
         <Fretboard
@@ -42,6 +48,7 @@ function App() {
           fretCount={fretCount}
           totalXP={totalXP}
           setTotalXP={setTotalXP}
+          accidentalMode={accidentalMode}
         />
       </div>
     </Layout>

@@ -20,6 +20,17 @@ const FRET_WIDTH_RATIOS = [
 const MARKERS = [3, 5, 7, 9, 15, 17, 19, 21]; // 1-indexed frets
 const DOUBLE_MARKERS = [12, 24]; // 1-indexed frets
 
+const FLAT_MAP = {
+    'C#': 'Db', 'D#': 'Eb', 'F#': 'Gb', 'G#': 'Ab', 'A#': 'Bb'
+};
+const formatNote = (note, mode) => {
+    if (!note) return '';
+    if (mode === 'flat') {
+        return FLAT_MAP[note] || note;
+    }
+    return note;
+};
+
 // Helper to get note name (e.g., 'C', 'F#')
 const getNoteAt = (stringIndex, fretIndex) => {
     // Calculate on the fly
@@ -92,10 +103,11 @@ const TRIAD_SHAPES = {
 export default function Fretboard({
     activeGameMode, setActiveGameMode,
     proMode,
-    fretCount,
-    totalXP, setTotalXP
+    fretCount = 13,
+    totalXP, setTotalXP,
+    accidentalMode = 'sharp'
 }) {
-    // DETECT MOBILE FOR EVEN FRETS
+    const scrollContainerRef = useRef(null);
     const [isMobile, setIsMobile] = useState(false);
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 700);
@@ -1245,7 +1257,7 @@ export default function Fretboard({
                                 </div>
 
                                 <div style={{ fontSize: '2rem', fontWeight: 800, color: '#f8fafc' }}>
-                                    FIND: <span style={{ color: '#2dd4bf' }}>{practiceTargetNote}</span>
+                                    FIND: <span style={{ color: '#2dd4bf' }}>{formatNote(practiceTargetNote, accidentalMode)}</span>
                                 </div>
 
                                 {/* VISUAL PIE TIMER */}
@@ -1431,7 +1443,10 @@ export default function Fretboard({
                                 <div style={{ fontSize: '1rem', color: '#94a3b8', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '10px' }}>FIND THIS TRIAD</div>
 
                                 <div style={{ fontSize: '2.5rem', fontWeight: '900', color: '#8b5cf6', margin: '0', textShadow: '0 0 20px rgba(139, 92, 246, 0.5)', lineHeight: '1' }}>
-                                    {triadTarget && triadTarget.key.replace('-', ' ').toUpperCase()}
+                                    {triadTarget && (() => {
+                                        const [root, type] = triadTarget.key.split('-'); // e.g. "A#", "Major"
+                                        return `${formatNote(root, accidentalMode)} ${type}`.toUpperCase();
+                                    })()}
                                 </div>
 
                                 <div style={{ fontSize: '1.5rem', color: '#f8fafc', marginTop: '15px', display: 'flex', justifyContent: 'center', gap: '15px', alignItems: 'center' }}>
@@ -1508,7 +1523,7 @@ export default function Fretboard({
                                                     : 'bg-slate-800 text-slate-400 border-slate-600 hover:border-slate-400 hover:text-white'}
                                         `}
                                         >
-                                            {note}
+                                            {formatNote(note, accidentalMode)}
                                         </button>
                                     ))}
 
@@ -1629,8 +1644,8 @@ export default function Fretboard({
                                                 }
                                             }}
                                             className={`px-2 py-1 rounded-full text-[0.65rem] font-bold transition-all ${isDeletingPresets
-                                                    ? 'bg-red-900/50 text-red-300 border border-red-500 hover:bg-red-800 animate-pulse'
-                                                    : 'bg-slate-700 text-slate-300 border border-slate-600 hover:bg-slate-600'
+                                                ? 'bg-red-900/50 text-red-300 border border-red-500 hover:bg-red-800 animate-pulse'
+                                                : 'bg-slate-700 text-slate-300 border border-slate-600 hover:bg-slate-600'
                                                 }`}
                                         >
                                             {preset.name} {isDeletingPresets && '×'}
@@ -1675,8 +1690,8 @@ export default function Fretboard({
                                                 <button
                                                     onClick={() => setIsDeletingPresets(!isDeletingPresets)}
                                                     className={`px-2 py-1 rounded-full text-[0.65rem] font-bold border transition-colors ${isDeletingPresets
-                                                            ? 'bg-red-600 text-white border-red-500 shadow-lg shadow-red-500/20'
-                                                            : 'bg-slate-800 text-slate-500 border-slate-700 hover:text-red-400 hover:border-red-500/50'
+                                                        ? 'bg-red-600 text-white border-red-500 shadow-lg shadow-red-500/20'
+                                                        : 'bg-slate-800 text-slate-500 border-slate-700 hover:text-red-400 hover:border-red-500/50'
                                                         }`}
                                                 >
                                                     {isDeletingPresets ? 'DONE' : 'DELETE'}
@@ -1991,7 +2006,7 @@ export default function Fretboard({
                                                 } : {}))
                                             }}
                                         >
-                                            {isMemoryTarget ? '?' : openNote}
+                                            {isMemoryTarget ? '?' : formatNote(openNote, accidentalMode)}
                                         </div>
                                     </div>
                                 </div>
@@ -2526,7 +2541,7 @@ export default function Fretboard({
                                                                     } : {})
                                                             }
                                                         >
-                                                            {isMemoryTarget ? '?' : (isDesignerNote ? designerLabel : note)}
+                                                            {isMemoryTarget ? '?' : (isDesignerNote ? designerLabel : formatNote(note, accidentalMode))}
                                                         </div>
                                                     </div>
 
@@ -2578,6 +2593,7 @@ export default function Fretboard({
             <PieMenuOverlay
                 target={memoryTarget}
                 onGuess={handleMemoryGuess}
+                accidentalMode={accidentalMode}
                 allowedNotes={(() => {
                     if (isCustomSetReady) {
                         const unique = new Set();
@@ -2600,7 +2616,7 @@ export default function Fretboard({
 }
 
 // PIE MENU OVERLAY COMPONENT (Fixed with Portal + rAF Tracking)
-const PieMenuOverlay = ({ target, onGuess, allowedNotes, visible }) => {
+const PieMenuOverlay = ({ target, onGuess, allowedNotes, visible, accidentalMode }) => {
     // We use a Portal to escape clipping
     const [mounted, setMounted] = useState(false);
     useEffect(() => setMounted(true), []);
@@ -2767,7 +2783,7 @@ const PieMenuOverlay = ({ target, onGuess, allowedNotes, visible }) => {
                                         fontWeight="bold"
                                         style={{ pointerEvents: 'none', opacity: isAllowed ? 1 : 0.6 }}
                                     >
-                                        {n}
+                                        {formatNote(n, accidentalMode)}
                                     </text>
                                 </g>
                             );

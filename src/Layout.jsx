@@ -7,7 +7,8 @@ export default function Layout({
     activeGameMode, setActiveGameMode,
     proMode, setProMode,
     fretCount, setFretCount,
-    totalXP, setTotalXP
+    totalXP, setTotalXP,
+    accidentalMode, setAccidentalMode
 }) {
 
     // Helper to switch mode
@@ -118,70 +119,92 @@ export default function Layout({
                 />
             )}
 
-            {/* SETTINGS MODAL */}
+            {/* SETTINGS SIDEBAR (RIGHT DRAWER) */}
             {showSettings && (
-                <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(15, 23, 42, 0.9)', backdropFilter: 'blur(5px)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    <div style={{ background: '#1e293b', padding: '40px', borderRadius: '20px', border: '1px solid #475569', width: '400px', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                            <h2 style={{ margin: 0, fontSize: '1.8rem', color: '#fff' }}>GAME SETTINGS</h2>
-                            <button onClick={() => setShowSettings(false)} className="btn" style={{ fontSize: '1.5rem', background: 'transparent', border: 'none', color: '#94a3b8' }}>✕</button>
-                        </div>
+                <div style={{
+                    position: 'fixed', top: '70px', right: 0, width: '280px', bottom: 0,
+                    background: '#1e293b', borderLeft: '1px solid #334155',
+                    zIndex: 1999, padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px',
+                    boxShadow: '-10px 0 30px rgba(0,0,0,0.5)',
+                    animation: 'slideInRight 0.2s ease-out'
+                }}>
+                    <div className="flex justify-between items-center pb-4 border-b border-slate-700">
+                        <h2 className="text-xl font-bold text-slate-100 italic tracking-wider">SETTINGS</h2>
+                        <button onClick={() => setShowSettings(false)} className="text-slate-400 hover:text-white text-2xl">×</button>
+                    </div>
 
-                        {/* PRO MODE TOGGLE */}
-                        <div style={{ marginBottom: '20px', padding: '20px', background: proMode ? 'rgba(34, 197, 94, 0.1)' : '#0f172a', borderRadius: '10px', border: proMode ? '1px solid #22c55e' : '1px solid #334155', transition: 'all 0.3s' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                                <span style={{ fontWeight: 'bold', fontSize: '1.1rem', color: proMode ? '#22c55e' : '#fff' }}>PRO MODE (UNLOCK ALL)</span>
-                                <label className="switch" style={{ position: 'relative', display: 'inline-block', width: '60px', height: '34px' }}>
-                                    <input
-                                        type="checkbox"
-                                        checked={proMode}
-                                        onChange={(e) => setProMode(e.target.checked)}
-                                        style={{ opacity: 0, width: 0, height: 0 }}
-                                    />
-                                    <span style={{
-                                        position: 'absolute', cursor: 'pointer', top: 0, left: 0, right: 0, bottom: 0,
-                                        backgroundColor: proMode ? '#22c55e' : '#ccc', borderRadius: '34px', transition: '.4s'
-                                    }}>
-                                        <span style={{
-                                            position: 'absolute', content: '""', height: '26px', width: '26px', left: '4px', bottom: '4px',
-                                            backgroundColor: 'white', borderRadius: '50%', transition: '.4s',
-                                            transform: proMode ? 'translateX(26px)' : 'translateX(0)'
-                                        }}></span>
-                                    </span>
-                                </label>
-                            </div>
-                            <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.9rem' }}>Enable all features including full fretboard access and advanced games.</p>
-                        </div>
-
-                        {/* FRET COUNT SLIDER */}
-                        <div style={{ marginBottom: '20px' }}>
-                            <label style={{ display: 'block', color: '#fff', marginBottom: '10px' }}>Fret Count: {fretCount}</label>
-                            <input
-                                type="range"
-                                min="12"
-                                max="24"
-                                value={fretCount}
-                                onChange={(e) => setFretCount(parseInt(e.target.value))}
-                                style={{ width: '100%', accentColor: '#3b82f6', height: '6px', borderRadius: '3px' }}
-                            />
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '5px', color: '#64748b', fontSize: '0.8rem' }}>
-                                <span>12</span>
-                                <span>24</span>
-                            </div>
-                        </div>
-
-                        {/* DANGER ZONE */}
-                        <div style={{ marginTop: '30px', paddingTop: '20px', borderTop: '1px solid #334155' }}>
+                    {/* ACCIDENTALS TOGGLE - GLOBAL */}
+                    <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                        <label className="text-xs font-bold text-slate-400 tracking-widest mb-3 block">ACCIDENTALS</label>
+                        <div className="flex bg-slate-900 rounded-lg p-1 border border-slate-800">
                             <button
-                                className="btn"
-                                onClick={() => { if (confirm('Reset all XP and progress?')) { setTotalXP(0); localStorage.setItem('fretboardXP', 0); setShowSettings(false); } }}
-                                style={{ width: '100%', backgroundColor: '#ef4444', color: 'white', padding: '12px', fontSize: '0.9rem' }}
+                                onClick={() => setAccidentalMode('sharp')}
+                                className={`flex-1 py-2 rounded-md text-xs font-bold transition-all ${accidentalMode === 'sharp'
+                                    ? 'bg-purple-600 text-white shadow-lg'
+                                    : 'text-slate-500 hover:text-slate-300'
+                                    }`}
                             >
-                                RESET PROGRESS (XP: {totalXP})
+                                SHARPS ♯
+                            </button>
+                            <button
+                                onClick={() => setAccidentalMode('flat')}
+                                className={`flex-1 py-2 rounded-md text-xs font-bold transition-all ${accidentalMode === 'flat'
+                                    ? 'bg-purple-600 text-white shadow-lg'
+                                    : 'text-slate-500 hover:text-slate-300'
+                                    }`}
+                            >
+                                FLATS ♭
                             </button>
                         </div>
                     </div>
+
+                    {/* PRO MODE TOGGLE */}
+                    <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700 flex items-center justify-between">
+                        <div>
+                            <span className={`block font-bold text-sm ${proMode ? 'text-emerald-400' : 'text-slate-300'}`}>PRO MODE</span>
+                            <span className="text-[0.65rem] text-slate-500 font-bold block mt-1">UNLOCK ALL FEATURES</span>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" checked={proMode} onChange={(e) => setProMode(e.target.checked)} className="sr-only peer" />
+                            <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                        </label>
+                    </div>
+
+                    {/* FRET COUNT SLIDER */}
+                    <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                        <label className="text-xs font-bold text-slate-400 tracking-widest mb-3 block flex justify-between">
+                            <span>BOARD SIZE</span>
+                            <span className="text-white">{fretCount} FRETS</span>
+                        </label>
+                        <input
+                            type="range"
+                            min="12" max="24"
+                            value={fretCount}
+                            onChange={(e) => setFretCount(parseInt(e.target.value))}
+                            className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                        />
+                    </div>
+
+                    {/* DANGER ZONE */}
+                    <div className="mt-auto pt-4 border-t border-slate-800">
+                        <button
+                            onClick={() => { if (confirm('Reset all XP and progress?')) { setTotalXP(0); localStorage.setItem('fretboardXP', 0); setShowSettings(false); } }}
+                            className="w-full py-3 rounded-lg bg-red-900/20 text-red-500 text-xs font-bold border border-red-900/50 hover:bg-red-900/40 hover:text-red-400 transition-colors"
+                        >
+                            RESET PROGRESS
+                        </button>
+                    </div>
+
+                    <style>{`@keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }`}</style>
                 </div>
+            )}
+
+            {/* CLICK OUTSIDE FOR SETTINGS */}
+            {showSettings && (
+                <div
+                    onClick={() => setShowSettings(false)}
+                    style={{ position: 'fixed', top: '70px', left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1998 }}
+                />
             )}
 
             {/* MAIN CONTENT WRAPPER */}
