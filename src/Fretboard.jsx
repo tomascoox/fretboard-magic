@@ -1556,6 +1556,33 @@ export default function Fretboard({
                                     OK
                                 </button>
                             </div>
+
+                            {/* PRESETS SECTION */}
+                            <div className="w-full pt-3 mt-1 border-t border-slate-700/50 flex flex-col items-center gap-2">
+                                <span className="text-slate-400 text-[0.65rem] font-bold uppercase tracking-widest">
+                                    PRESETS:
+                                </span>
+                                <div className="flex flex-wrap gap-2 justify-center">
+                                    <button
+                                        onClick={() => {
+                                            const naturals = [];
+                                            // Iterate all positions to find naturals
+                                            for (let s = 0; s < 6; s++) {
+                                                for (let f = 0; f <= 22; f++) { // Hardcoded max frets for now, covers standard range
+                                                    const note = getNoteAt(s, f);
+                                                    if (!note.includes('#')) {
+                                                        naturals.push(`${s}-${f}`);
+                                                    }
+                                                }
+                                            }
+                                            setCustomSelectedNotes(naturals);
+                                        }}
+                                        className="px-2 py-1 rounded-full bg-slate-700 text-slate-300 text-[0.65rem] font-bold hover:bg-slate-600 border border-slate-600 transition-colors"
+                                    >
+                                        NATURALS
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     )}
 
