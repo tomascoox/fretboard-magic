@@ -1829,8 +1829,20 @@ export default function Fretboard({
                                     >
                                         <div
                                             className={`note-circle ${isVisible ? 'revealed' : ''} ${feedbackState || ''} ${isMemoryTarget ? 'memory-target' : ''}`}
-                                            style={
-                                                isCustomSelected ? {
+                                            style={{
+                                                position: 'absolute',
+                                                top: '50%',
+                                                left: '50%',
+                                                transform: 'translate(-50%, -50%)',
+
+                                                width: 'min(26px, var(--string-height))',
+                                                height: 'min(26px, var(--string-height))',
+                                                borderRadius: '50%',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                zIndex: 5,
+                                                ...(isCustomSelected ? {
                                                     backgroundColor: '#3b82f6',
                                                     borderColor: '#60a5fa',
                                                     color: '#ffffff',
@@ -1844,8 +1856,8 @@ export default function Fretboard({
                                                     boxShadow: '0 0 5px rgba(59, 130, 246, 0.5)',
                                                     fontWeight: 'bold',
                                                     opacity: 0.9
-                                                } : {})
-                                            }
+                                                } : {}))
+                                            }}
                                         >
                                             {isMemoryTarget ? '?' : openNote}
                                         </div>
