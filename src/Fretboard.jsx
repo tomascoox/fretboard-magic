@@ -1433,98 +1433,100 @@ export default function Fretboard({
             {/* MEMORY GAME HUD */}
             {/* MEMORY GAME HUD */}
             {activeGameMode === 'memory' && !memoryGameActive && (
-                <div className="game-hud" style={{ width: 'auto', margin: '0 10px', flexDirection: 'column', gap: '8px', marginBottom: '15px', background: 'rgba(30, 41, 59, 0.5)', padding: '10px', borderRadius: '12px', border: '1px solid #3b82f6' }}>
+                <div className="game-hud" style={{ width: 'auto', margin: '0 10px', flexDirection: 'column', gap: '8px', marginBottom: '15px', background: 'rgba(30, 41, 59, 0.5)', padding: '20px', borderRadius: '12px', border: '1px solid #3b82f6' }}>
 
                     {/* ROW 1: NOTES SELECTOR */}
-                    <div className="flex flex-col gap-1 items-center w-full">
-                        <div className="flex flex-col items-center gap-1 sm:gap-2 w-full max-w-3xl justify-center">
-                            {/* LABEL */}
-                            <div className="text-[0.6rem] sm:text-xs font-bold text-slate-500 w-full text-center shrink-0">NOTES</div>
+                    {!isCustomSelectionMode && !isCustomSetReady && (
+                        <div className="flex flex-col gap-1 items-center w-full">
+                            <div className="flex flex-col items-center gap-1 sm:gap-2 w-full max-w-3xl justify-center">
+                                {/* LABEL */}
+                                <div className="text-[0.6rem] sm:text-xs font-bold text-slate-500 w-full text-center shrink-0">NOTES</div>
 
-                            {/* BUTTONS */}
-                            <div className="flex flex-wrap justify-center gap-1 sm:gap-2">
-                                {['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'].map(note => (
-                                    <button
-                                        key={note}
-                                        disabled={isCustomSelectionMode}
-                                        onPointerDown={(e) => {
-                                            e.preventDefault();
-                                            e.currentTarget.releasePointerCapture(e.pointerId); // Allow smooth dragging
-                                            const isActive = memoryAllowedNotes.includes(note);
-                                            const action = isActive ? 'remove' : 'add';
-                                            dragSelectRef.current = { active: true, type: 'note', action };
+                                {/* BUTTONS */}
+                                <div className="flex flex-wrap justify-center gap-1 sm:gap-2">
+                                    {['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'].map(note => (
+                                        <button
+                                            key={note}
+                                            disabled={isCustomSelectionMode}
+                                            onPointerDown={(e) => {
+                                                e.preventDefault();
+                                                e.currentTarget.releasePointerCapture(e.pointerId); // Allow smooth dragging
+                                                const isActive = memoryAllowedNotes.includes(note);
+                                                const action = isActive ? 'remove' : 'add';
+                                                dragSelectRef.current = { active: true, type: 'note', action };
 
-                                            // Immediate update
-                                            if (action === 'add') setMemoryAllowedNotes(prev => [...prev, note]);
-                                            else setMemoryAllowedNotes(prev => prev.filter(n => n !== note));
-                                        }}
-                                        onPointerEnter={() => {
-                                            const { active, type, action } = dragSelectRef.current;
-                                            if (active && type === 'note') {
-                                                if (action === 'add' && !memoryAllowedNotes.includes(note)) {
-                                                    setMemoryAllowedNotes(prev => [...prev, note]);
-                                                    setIsCustomSetReady(false);
-                                                } else if (action === 'remove' && memoryAllowedNotes.includes(note)) {
-                                                    setMemoryAllowedNotes(prev => prev.filter(n => n !== note));
-                                                    setIsCustomSetReady(false);
+                                                // Immediate update
+                                                if (action === 'add') setMemoryAllowedNotes(prev => [...prev, note]);
+                                                else setMemoryAllowedNotes(prev => prev.filter(n => n !== note));
+                                            }}
+                                            onPointerEnter={() => {
+                                                const { active, type, action } = dragSelectRef.current;
+                                                if (active && type === 'note') {
+                                                    if (action === 'add' && !memoryAllowedNotes.includes(note)) {
+                                                        setMemoryAllowedNotes(prev => [...prev, note]);
+                                                        setIsCustomSetReady(false);
+                                                    } else if (action === 'remove' && memoryAllowedNotes.includes(note)) {
+                                                        setMemoryAllowedNotes(prev => prev.filter(n => n !== note));
+                                                        setIsCustomSetReady(false);
+                                                    }
                                                 }
-                                            }
-                                        }}
-                                        className={`
+                                            }}
+                                            className={`
                                             w-7 h-7 sm:w-10 sm:h-10 rounded-md font-bold text-[0.6rem] sm:text-sm transition-all
                                             flex items-center justify-center border cursor-pointer select-none touch-none
                                             ${isCustomSelectionMode ? 'opacity-20 pointer-events-none grayscale' : ''}
                                             ${memoryAllowedNotes.includes(note) && !isCustomSelectionMode
-                                                ? 'bg-blue-500 text-white border-blue-500 shadow-lg shadow-blue-500/50 scale-105 z-10'
-                                                : 'bg-slate-800 text-slate-400 border-slate-600 hover:border-slate-400 hover:text-white'}
+                                                    ? 'bg-blue-500 text-white border-blue-500 shadow-lg shadow-blue-500/50 scale-105 z-10'
+                                                    : 'bg-slate-800 text-slate-400 border-slate-600 hover:border-slate-400 hover:text-white'}
                                         `}
-                                    >
-                                        {note}
-                                    </button>
-                                ))}
+                                        >
+                                            {note}
+                                        </button>
+                                    ))}
 
-                                {/* CUSTOM SELECTION BUTTON */}
-                                <button
-                                    onClick={() => {
-                                        setIsCustomSelectionMode(true);
+                                    {/* CUSTOM SELECTION BUTTON */}
+                                    <button
+                                        onClick={() => {
+                                            setIsCustomSelectionMode(true);
 
-                                        // IMPORT EXISTING SELECTION IF EMPTY OR OVERWRITE LOGIC?
-                                        // User wants to refine current selection.
-                                        // If we are NOT already in a "Ready Custom Set", we import from Standard filters.
-                                        // If we ARE (isCustomSetReady=true), we keep editing it.
-                                        if (!isCustomSetReady) {
-                                            const initialSelection = [];
-                                            const maxF = 22;
-                                            memoryAllowedStrings.forEach(s => {
-                                                if (!TUNING[s]) return;
-                                                for (let f = 0; f <= maxF; f++) {
-                                                    const n = getNoteAt(s, f);
-                                                    if (memoryAllowedNotes.includes(n)) {
-                                                        initialSelection.push(`${s}-${f}`);
+                                            // IMPORT EXISTING SELECTION IF EMPTY OR OVERWRITE LOGIC?
+                                            // User wants to refine current selection.
+                                            // If we are NOT already in a "Ready Custom Set", we import from Standard filters.
+                                            // If we ARE (isCustomSetReady=true), we keep editing it.
+                                            if (!isCustomSetReady) {
+                                                const initialSelection = [];
+                                                const maxF = 22;
+                                                memoryAllowedStrings.forEach(s => {
+                                                    if (!TUNING[s]) return;
+                                                    for (let f = 0; f <= maxF; f++) {
+                                                        const n = getNoteAt(s, f);
+                                                        if (memoryAllowedNotes.includes(n)) {
+                                                            initialSelection.push(`${s}-${f}`);
+                                                        }
                                                     }
-                                                }
-                                            });
-                                            setCustomSelectedNotes(initialSelection);
-                                        }
-                                        setIsCustomSetReady(false);
-                                    }}
-                                    disabled={isCustomSelectionMode}
-                                    className={`
+                                                });
+                                                setCustomSelectedNotes(initialSelection);
+                                            }
+                                            setIsCustomSetReady(false);
+                                        }}
+                                        disabled={isCustomSelectionMode}
+                                        className={`
                                         h-7 sm:h-10 px-2 sm:px-3 rounded-md font-bold text-[0.6rem] sm:text-sm transition-all
                                         flex items-center justify-center border cursor-pointer select-none touch-none
                                         bg-purple-600 text-white border-purple-500 shadow-lg shadow-purple-500/50 hover:bg-purple-500
                                         ${isCustomSelectionMode ? 'bg-purple-800 border-purple-800 ring-2 ring-white cursor-default' : ''}
                                     `}
-                                >
-                                    CUSTOM
-                                </button>
+                                    >
+                                        CUSTOM
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* CUSTOM MODE CONTROLS */}
                     {isCustomSelectionMode && (
-                        <div className="flex items-center gap-4 justify-center py-2 bg-slate-800/50 rounded-lg w-full border border-purple-500/30 animate-pulse-slow my-2">
+                        <div className="flex items-center gap-2 sm:gap-4 justify-center py-2 px-3 sm:px-4 bg-slate-800/50 rounded-lg w-full border border-purple-500/30 animate-pulse-slow my-2">
                             <button
                                 onClick={() => {
                                     setIsCustomSelectionMode(false);
@@ -1535,8 +1537,8 @@ export default function Fretboard({
                                 CANCEL
                             </button>
 
-                            <span className="text-purple-300 text-xs sm:text-sm font-bold uppercase tracking-wider">
-                                Select notes on the fretboard
+                            <span className="text-purple-300 text-[0.65rem] sm:text-sm font-bold uppercase tracking-wider text-center leading-tight">
+                                Select notes<br className="sm:hidden" /> on the fretboard
                             </span>
 
                             <button
@@ -1555,59 +1557,83 @@ export default function Fretboard({
                         </div>
                     )}
 
-                    <div className={`flex justify-center flex-col items-center gap-[5px] sm:gap-4 mt-[5px] sm:mt-4 ${isCustomSelectionMode ? 'opacity-20 pointer-events-none' : ''}`}>
+                    {/* CUSTOM READY PANEL */}
+                    {!isCustomSelectionMode && isCustomSetReady && (
+                        <div className="flex flex-col gap-3 items-center w-full py-4 animate-fade-in bg-slate-800/30 rounded-lg border border-purple-500/20 my-2">
+                            <div className="text-emerald-400 font-bold tracking-widest text-sm sm:text-lg uppercase drop-shadow-md">
+                                Custom Set Active
+                            </div>
+                            <div className="text-slate-400 text-xs text-center px-4">
+                                {customSelectedNotes.length} notes selected <br />
+                                <span className="opacity-50">Standard controls disabled</span>
+                            </div>
+                            <div className="flex gap-4">
+                                <button onClick={() => setIsCustomSelectionMode(true)} className="px-4 py-1.5 rounded bg-purple-600 text-white text-xs font-bold hover:bg-purple-500 border border-purple-500 shadow-lg shadow-purple-500/30 transition-all">
+                                    EDIT
+                                </button>
+                                <button onClick={() => setIsCustomSetReady(false)} className="px-4 py-1.5 rounded bg-slate-700 text-slate-300 text-xs font-bold hover:bg-slate-600 border border-slate-600 transition-all">
+                                    CANCEL CUSTOM
+                                </button>
+                            </div>
+                        </div>
+                    )}
 
-                        {/* ROW 2: STRINGS SELECTOR */}
-                        <div className="flex flex-col items-center gap-1 sm:gap-2 w-full max-w-3xl justify-center">
-                            {/* LABEL */}
-                            <div className="text-[0.6rem] sm:text-xs font-bold text-slate-500 w-full text-center shrink-0">STRINGS</div>
+                    {!isCustomSelectionMode && !isCustomSetReady && (
+                        <div className={`flex justify-center flex-col items-center gap-[5px] sm:gap-4 mt-[5px] sm:mt-4`}>
+                            {/* ROW 2: STRINGS SELECTOR */}
+                            <div className="flex flex-col items-center gap-1 sm:gap-2 w-full max-w-3xl justify-center">
+                                {/* LABEL */}
+                                <div className="text-[0.6rem] sm:text-xs font-bold text-slate-500 w-full text-center shrink-0">STRINGS</div>
 
-                            <div className="grid grid-cols-6 gap-0.5 sm:gap-1 w-auto min-w-[180px] max-w-[220px] sm:min-w-[300px] sm:max-w-[400px]">
-                                {[5, 4, 3, 2, 1, 0].map((stringIndex, i) => (
-                                    <button
-                                        key={stringIndex}
-                                        onPointerDown={(e) => {
-                                            e.preventDefault();
-                                            e.currentTarget.releasePointerCapture(e.pointerId);
-                                            const isActive = memoryAllowedStrings.includes(stringIndex);
-                                            const action = isActive ? 'remove' : 'add';
-                                            dragSelectRef.current = { active: true, type: 'string', action };
+                                <div className="grid grid-cols-6 gap-0.5 sm:gap-1 w-auto min-w-[180px] max-w-[220px] sm:min-w-[300px] sm:max-w-[400px]">
+                                    {[5, 4, 3, 2, 1, 0].map((stringIndex, i) => (
+                                        <button
+                                            key={stringIndex}
+                                            onPointerDown={(e) => {
+                                                e.preventDefault();
+                                                e.currentTarget.releasePointerCapture(e.pointerId);
+                                                const isActive = memoryAllowedStrings.includes(stringIndex);
+                                                const action = isActive ? 'remove' : 'add';
+                                                dragSelectRef.current = { active: true, type: 'string', action };
 
-                                            // Immediate update
-                                            if (action === 'add') setMemoryAllowedStrings(prev => [...prev, stringIndex]);
-                                            else setMemoryAllowedStrings(prev => prev.filter(s => s !== stringIndex));
-                                        }}
-                                        onPointerEnter={() => {
-                                            const { active, type, action } = dragSelectRef.current;
-                                            if (active && type === 'string') {
-                                                if (action === 'add' && !memoryAllowedStrings.includes(stringIndex)) {
-                                                    setMemoryAllowedStrings(prev => [...prev, stringIndex]);
-                                                } else if (action === 'remove' && memoryAllowedStrings.includes(stringIndex)) {
-                                                    setMemoryAllowedStrings(prev => prev.filter(s => s !== stringIndex));
+                                                // Immediate update
+                                                if (action === 'add') setMemoryAllowedStrings(prev => [...prev, stringIndex]);
+                                                else setMemoryAllowedStrings(prev => prev.filter(s => s !== stringIndex));
+                                            }}
+                                            onPointerEnter={() => {
+                                                const { active, type, action } = dragSelectRef.current;
+                                                if (active && type === 'string') {
+                                                    if (action === 'add' && !memoryAllowedStrings.includes(stringIndex)) {
+                                                        setMemoryAllowedStrings(prev => [...prev, stringIndex]);
+                                                    } else if (action === 'remove' && memoryAllowedStrings.includes(stringIndex)) {
+                                                        setMemoryAllowedStrings(prev => prev.filter(s => s !== stringIndex));
+                                                    }
                                                 }
-                                            }
-                                        }}
-                                        className={`
+                                            }}
+                                            className={`
                                             h-7 w-full sm:h-10 rounded-md font-bold text-[0.6rem] sm:text-sm transition-all
                                             flex items-center justify-center border cursor-pointer select-none touch-none
                                         `}
-                                        style={{
-                                            backgroundColor: memoryAllowedStrings.includes(stringIndex) ? '#3b82f6' : '#1e293b',
-                                            color: memoryAllowedStrings.includes(stringIndex) ? '#fff' : '#94a3b8',
-                                            borderColor: memoryAllowedStrings.includes(stringIndex) ? '#3b82f6' : '#475569',
-                                            opacity: memoryAllowedStrings.includes(stringIndex) ? 1 : 0.5,
-                                            gridColumn: i + 1,
-                                            gridRow: 1
-                                        }}
-                                    >
-                                        {6 - stringIndex}
-                                    </button>
-                                ))}
+                                            style={{
+                                                backgroundColor: memoryAllowedStrings.includes(stringIndex) ? '#3b82f6' : '#1e293b',
+                                                color: memoryAllowedStrings.includes(stringIndex) ? '#fff' : '#94a3b8',
+                                                borderColor: memoryAllowedStrings.includes(stringIndex) ? '#3b82f6' : '#475569',
+                                                opacity: memoryAllowedStrings.includes(stringIndex) ? 1 : 0.5,
+                                                gridColumn: i + 1,
+                                                gridRow: 1
+                                            }}
+                                        >
+                                            {6 - stringIndex}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         </div>
+                    )}
 
-                        {/* ROW 3: CONTROLS */}
-                        <div className="mt-3 flex gap-4 items-center">
+                    {/* ROW 3: CONTROLS (Common for Standard & Ready Custom Modes) */}
+                    {!isCustomSelectionMode && (
+                        <div className="mt-3 flex gap-4 items-center justify-center w-full">
                             <button
                                 onClick={startMemoryGame}
                                 className="h-9 px-6 sm:h-12 sm:px-8 rounded-lg font-bold text-xs sm:text-base bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 hover:bg-emerald-400 hover:scale-105 transition-all"
@@ -1615,7 +1641,7 @@ export default function Fretboard({
                                 START HUNT
                             </button>
                         </div>
-                    </div>
+                    )}
                 </div>
             )}
 
@@ -1625,7 +1651,7 @@ export default function Fretboard({
                         onClick={() => stopMemoryGame(false)}
                         className="h-9 px-6 sm:h-12 sm:px-8 rounded-lg font-bold text-xs sm:text-base bg-slate-700 text-slate-300 border border-slate-600 hover:bg-slate-600 transition-all shadow-xl shadow-black/40"
                     >
-                        STOP
+                        STOP HUNTING
                     </button>
                 </div>
             )}
@@ -2438,6 +2464,7 @@ const PieMenuOverlay = ({ target, onGuess, allowedNotes, visible }) => {
     // Ref for the moving container (to update directly without re-renders)
     const overlayRef = useRef(null);
     const rafId = useRef(null);
+    const isHoveredRef = useRef(false);
 
     // Tracking Loop
     useEffect(() => {
@@ -2452,7 +2479,17 @@ const PieMenuOverlay = ({ target, onGuess, allowedNotes, visible }) => {
 
                 // Apply directly to DOM for smoothness during scroll
                 overlayRef.current.style.transform = `translate(${centerX}px, ${centerY}px)`;
-                overlayRef.current.style.opacity = '1';
+
+                // PULSE OPACITY LOGIC (unless hovered)
+                if (isHoveredRef.current) {
+                    overlayRef.current.style.opacity = '1';
+                } else {
+                    const time = Date.now();
+                    // 2 second period sine wave (0.3 to 0.9)
+                    const alpha = 0.6 + 0.3 * Math.sin((time / 2000) * 2 * Math.PI);
+                    overlayRef.current.style.opacity = alpha.toFixed(2);
+                }
+
             } else if (overlayRef.current) {
                 // Hide if target lost off screen? Or just lost.
                 overlayRef.current.style.opacity = '0';
@@ -2470,7 +2507,7 @@ const PieMenuOverlay = ({ target, onGuess, allowedNotes, visible }) => {
 
     if (!visible || !target || !mounted) return null;
 
-    const notes = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'];
+    const notes = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'G#', 'D#', 'A#', 'F'];
     const radius = 85;
     const innerRadius = 50;
     const sliceAngle = 360 / 12;
@@ -2505,7 +2542,12 @@ const PieMenuOverlay = ({ target, onGuess, allowedNotes, visible }) => {
                     width: radius * 2,
                     height: radius * 2
                 }}>
-                    <svg width="100%" height="100%" viewBox="-100 -100 200 200" style={{ overflow: 'visible' }}>
+                    <svg
+                        width="100%" height="100%" viewBox="-100 -100 200 200"
+                        style={{ overflow: 'visible', pointerEvents: 'auto' }}
+                        onMouseEnter={() => isHoveredRef.current = true}
+                        onMouseLeave={() => isHoveredRef.current = false}
+                    >
                         <filter id="glow">
                             <feGaussianBlur stdDeviation="2.5" result="coloredBlur" />
                             <feMerge>
@@ -2567,8 +2609,8 @@ const PieMenuOverlay = ({ target, onGuess, allowedNotes, visible }) => {
                                 >
                                     <path
                                         d={pathData}
-                                        fill={isAllowed ? '#3b82f6' : '#1e293b'}
-                                        stroke="#1e3a8a"
+                                        fill={isAllowed ? '#3b82f6' : '#334155'}
+                                        stroke={isAllowed ? '#1e3a8a' : '#1e293b'}
                                         strokeWidth="1"
                                     />
                                     <text
@@ -2576,10 +2618,10 @@ const PieMenuOverlay = ({ target, onGuess, allowedNotes, visible }) => {
                                         y={ty}
                                         textAnchor="middle"
                                         dominantBaseline="middle"
-                                        fill="white"
+                                        fill={isAllowed ? 'white' : '#64748b'}
                                         fontSize="14"
                                         fontWeight="bold"
-                                        style={{ pointerEvents: 'none' }}
+                                        style={{ pointerEvents: 'none', opacity: isAllowed ? 1 : 0.6 }}
                                     >
                                         {n}
                                     </text>
