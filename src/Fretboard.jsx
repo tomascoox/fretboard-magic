@@ -1023,11 +1023,11 @@ export default function Fretboard({
                             zIndex: 0,
                             pointerEvents: 'none'
                         }}>
-                            {/* Dot on B String (Row 2, Index 4) */}
-                            <div className="marker double" style={{ gridRow: 2, position: 'static', transform: 'none', margin: 0 }}></div>
+                            {/* Dot on B String (Row 2, Index 4) -> Nudged Down */}
+                            <div className="marker double" style={{ gridRow: 2, position: 'static', transform: 'translateY(30%)', margin: 0 }}></div>
 
-                            {/* Dot on A String (Row 5, Index 1) */}
-                            <div className="marker double" style={{ gridRow: 5, position: 'static', transform: 'none', margin: 0 }}></div>
+                            {/* Dot on A String (Row 5, Index 1) -> Nudged Up */}
+                            <div className="marker double" style={{ gridRow: 5, position: 'static', transform: 'translateY(-30%)', margin: 0 }}></div>
                         </div>
                     );
                 } else {
