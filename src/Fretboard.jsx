@@ -1889,19 +1889,23 @@ export default function Fretboard({
                     zIndex: 30,
                     // Border and Shadow moved to inner content to allow bottom cap to mask it
                 }}>
-                    {/* Rotated Wood Background */}
+                    {/* Rotated Wood Background & Bone Nut */}
                     <div style={{
                         position: 'absolute',
-                        inset: 0,
+                        top: 'calc(var(--string-height) / 2 - 10.2px)',
+                        height: 'calc(5 * var(--string-height) + 20.4px)',
+                        left: 0, right: 0,
                         overflow: 'hidden',
-                        zIndex: 0
+                        zIndex: 0,
+                        borderRight: '5px solid #ded6d0',
+                        boxShadow: '4px 0 8px rgba(0,0,0,0.5)',
                     }}>
                         <div style={{
                             position: 'absolute',
                             top: '50%', left: '50%',
                             width: '200vw', height: '200vw',
                             transform: 'translate(-50%, -50%) rotate(90deg)',
-                            backgroundImage: "url('/fretboard-wood.webp')",
+                            backgroundImage: "url('/fretboard-wood-pale.webp')",
                             backgroundRepeat: 'repeat',
                         }} />
                     </div>
@@ -1911,10 +1915,11 @@ export default function Fretboard({
                         position: 'relative',
                         zIndex: 10,
                         height: 'calc(6 * var(--string-height))',
-                        borderRight: '5px solid #ded6d0', // The Nut Itself (Moved here)
-                        boxShadow: '4px 0 8px rgba(0,0,0,0.5)', // Shadow only from the wood part
+                        // borderRight: '5px solid #ded6d0', // MOVED to visual div
+                        // boxShadow: '4px 0 8px rgba(0,0,0,0.5)', // MOVED to visual div
                         display: 'flex',
                         flexDirection: 'column'
+
                     }}>
                         {TUNING.slice().reverse().map((noteCode, visualIndex) => {
                             // visualIndex 0 = High E (String 5)
@@ -2110,11 +2115,13 @@ export default function Fretboard({
                                     <div style={{
                                         gridColumn: '1 / -1',
                                         gridRow: '1 / 7', // Span only string rows (1-6). 
+                                        marginTop: 'calc(var(--string-height) / 2 - 10.2px)',
+                                        marginBottom: 'calc(var(--string-height) / 2 - 10.2px)',
                                         // Wait, the numbers (Row 7) have their own background.
                                         // So Wood should only be under strings.
                                         // Correct.
                                         zIndex: 0,
-                                        backgroundImage: "url('/fretboard-wood.webp')",
+                                        backgroundImage: "url('/fretboard-wood-pale.webp')",
                                         backgroundRepeat: 'repeat',
                                         // Rotation logic from CSS was: translate(-50%, -50%) rotate(90deg) width 200vw.
                                         // If I use standard background, grain is vertical?
@@ -2130,7 +2137,7 @@ export default function Fretboard({
                                             top: '50%', left: '50%',
                                             width: '200vw', height: '200vw',
                                             transform: 'translate(-50%, -50%) rotate(90deg)',
-                                            backgroundImage: "url('/fretboard-wood.webp')",
+                                            backgroundImage: "url('/fretboard-wood-pale.webp')",
                                             backgroundRepeat: 'repeat'
                                         }}></div>
                                     </div>
@@ -2147,22 +2154,30 @@ export default function Fretboard({
                                         position: 'sticky',
                                         left: 0,
                                         zIndex: 40,
-                                        // Wood Background handled by nested div
-                                        // The Nut Visual (Right Border)
-                                        borderRight: '5px solid #ded6d0', // Bone white/grey color
-                                        boxShadow: '4px 0 8px rgba(0,0,0,0.5)', // Shadow specifically casting onto the scrolling board
-                                        overflow: 'hidden'
+                                        // Wood Background and Border handled by visual child
                                     }}>
-                                        {/* Rotated Wood Background */}
+                                        {/* Visual Nut with Trimmed Edges */}
                                         <div style={{
                                             position: 'absolute',
-                                            top: '50%', left: '50%',
-                                            width: '200vw', height: '200vw',
-                                            transform: 'translate(-50%, -50%) rotate(90deg)',
-                                            backgroundImage: "url('/fretboard-wood.webp')",
-                                            backgroundRepeat: 'repeat',
+                                            top: 'calc(var(--string-height) / 2 - 10.2px)',
+                                            bottom: 'calc(var(--string-height) / 2 - 10.2px)',
+                                            left: 0, right: 0,
+                                            borderRight: '5px solid #ded6d0', // Bone white/grey color
+                                            boxShadow: '4px 0 8px rgba(0,0,0,0.5)', // Shadow specifically casting onto the scrolling board
+                                            overflow: 'hidden',
                                             zIndex: -1
-                                        }} />
+                                        }}>
+                                            {/* Rotated Wood Background */}
+                                            <div style={{
+                                                position: 'absolute',
+                                                top: '50%', left: '50%',
+                                                width: '200vw', height: '200vw',
+                                                transform: 'translate(-50%, -50%) rotate(90deg)',
+                                                backgroundImage: "url('/fretboard-wood-pale.webp')",
+                                                backgroundRepeat: 'repeat',
+                                                zIndex: -1
+                                            }} />
+                                        </div>
 
                                         {/* Static String Segments for the Nut Area */}
                                         {TUNING.map((_, sIndex) => {
@@ -2220,6 +2235,8 @@ export default function Fretboard({
                                                 gridColumn: i + 1, // Fret 1 is Col 1
                                                 gridRow: '1 / 7', // Constrain to strings area
                                                 position: 'relative',
+                                                marginTop: 'calc(var(--string-height) / 2 - 10.2px)',
+                                                marginBottom: 'calc(var(--string-height) / 2 - 10.2px)',
                                                 justifySelf: 'end',
                                                 right: '-1px'
                                             }}

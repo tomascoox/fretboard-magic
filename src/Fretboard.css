@@ -23,7 +23,7 @@
     /* Responsive Variables */
     --base-unit: 80px;
     --nut-width: 38px;
-    --string-height: 34px;
+    --string-height: 42px;
     --fret-width: 6px;
 }
 
@@ -33,7 +33,7 @@
     .fretboard-wrapper {
         --base-unit: 52px;
         --nut-width: 34px;
-        --string-height: 30px;
+        --string-height: 36px;
         --fret-width: 5px;
         padding: 20px;
         /* Reduce padding */
@@ -44,7 +44,7 @@
     .fretboard-wrapper {
         --base-unit: 45px;
         --nut-width: 30px;
-        --string-height: 28px;
+        --string-height: 32px;
         --fret-width: 4px;
         padding: 10px;
     }
@@ -60,7 +60,7 @@
         --base-unit: 24px;
         /* Aggressive shrink for mobile portrait */
         --nut-width: 24px;
-        --string-height: 24px;
+        --string-height: 28px;
         --fret-width: 3px;
         padding: 15px 12px;
         /* Balanced mobile padding */
@@ -148,9 +148,7 @@
     /* Slimmer rows for electric guitar feel */
     /* Slimmer rows for electric guitar feel */
     position: relative;
-    /* Use the real wood texture via ::before for rotation */
-    background-color: #2e201a;
-    /* Fallback color matching wood */
+    background-color: transparent;
 
     /* border: 1px solid #2d2a2a; REMOVED BORDER */
     box-shadow: none;
@@ -175,7 +173,7 @@
     /* Massive square to ensure coverage after rotation */
     height: 200vw;
     transform: translate(-50%, -50%) rotate(90deg);
-    background-image: url('/fretboard-wood.webp');
+    background-image: url('/fretboard-wood-pale.webp');
     background-repeat: repeat;
     z-index: 0;
     /* Painted first, so behind content */
