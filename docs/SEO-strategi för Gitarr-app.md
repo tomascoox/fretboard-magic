@@ -9,7 +9,7 @@ Denna lista är extraherad från strategin för att enkelt kunna bockas av.
 - [x] Migrera existerande React-kod till Next.js App Router.
 - [ ] Implementera "Phantom Wrapper" för sticky footer (förhindra CLS).
 - [ ] PWA-stöd (Offline-läge, Manifest för installation).
-- [ ] Mobil-first responsiv design.
+- [x] Mobil-first responsiv design.
 
 ### **SEO & Struktur**
 - [ ] Sätt upp URL-struktur för specifika verktyg (t.ex. `/tools/bass-guitar`).
