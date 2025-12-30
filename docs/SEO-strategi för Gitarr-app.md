@@ -1,3 +1,12 @@
+# **PROJEKTSTATUS (2025-12-30)**
+* **Namn:** FretHunt (tidigare fretboard-magic)
+* **Domän:** [frethunt.com](https://frethunt.com) (Live)
+* **Tech:** Next.js 16 (App Router), TypeScript, Vercel.
+* **Status:** Migration från Vite klar. Grundläggande SEO (Meta/OG) implementerad.
+* **Nästa Fokus:** Se checklistan nedan (PWA, Landningssidor, Schema).
+
+---
+
 # **Strategisk Analys och Implementeringsplan för "Note Hunt": Marknadspositionering, Teknisk SEO och Monetarisering för en Webbaserad Gitarrutbildningsplattform**
 
 ## **0. Implementerings-Checklista (Action Plan)**
