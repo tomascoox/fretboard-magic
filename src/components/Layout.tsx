@@ -6,8 +6,7 @@ interface LayoutProps {
     children: React.ReactNode;
     activeGameMode: GameMode;
     setActiveGameMode: (mode: GameMode) => void;
-    showMenu: boolean;
-    setShowMenu: (show: boolean) => void;
+
     showSettings: boolean;
     setShowSettings: (show: boolean) => void;
     proMode: boolean;
@@ -22,7 +21,7 @@ interface LayoutProps {
 
 export default function Layout({
     children,
-    showMenu, setShowMenu,
+
     showSettings, setShowSettings,
     activeGameMode, setActiveGameMode,
     proMode, setProMode,
@@ -31,11 +30,7 @@ export default function Layout({
     accidentalMode, setAccidentalMode
 }: LayoutProps) {
 
-    // Helper to switch mode
-    const switchGameMode = (mode: GameMode) => {
-        setActiveGameMode(mode);
-        setShowMenu(false);
-    };
+
 
     return (
         <>
@@ -52,18 +47,8 @@ export default function Layout({
                 backdropFilter: 'blur(10px)',
                 boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
             }}>
-                {/* LEFT: HAMBURGER + BRAND */}
+                {/* LEFT: BRAND */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                    <button
-                        onClick={() => setShowMenu(!showMenu)}
-                        style={{
-                            background: 'transparent', border: 'none', color: '#f8fafc',
-                            fontSize: '1.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center'
-                        }}
-                    >
-                        ☰
-                    </button>
-
                     <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '900', color: '#f8fafc', letterSpacing: '1px', fontStyle: 'italic' }}>
                         Fret<span style={{ color: '#3b82f6' }}>Hunt</span>
                     </h1>
@@ -85,59 +70,6 @@ export default function Layout({
 
             {/* SPACER FOR FIXED NAVBAR */}
             <div style={{ height: '90px' }} />
-
-            {/* HAMBURGER MENU DRAWER */}
-            {showMenu && (
-                <div style={{
-                    position: 'fixed', top: '70px', left: 0, width: '280px', bottom: 0,
-                    background: '#1e293b', borderRight: '1px solid #334155',
-                    zIndex: 1999, padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px',
-                    boxShadow: '10px 0 30px rgba(0,0,0,0.5)',
-                    animation: 'slideIn 0.2s ease-out'
-                }}>
-                    {process.env.NODE_ENV === 'development' && (
-                        <>
-                            <button
-                                onClick={() => switchGameMode('chord-designer')}
-                                className={`w-full text-left px-4 py-3 rounded-lg font-bold transition-all border ${activeGameMode === 'chord-designer' ? 'bg-rose-500 text-white border-rose-500' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-750'}`}
-                            >
-                                TRIADS
-                            </button>
-
-                            <button
-                                onClick={() => switchGameMode('string-walker')}
-                                className={`w-full text-left px-4 py-3 rounded-lg font-bold transition-all border ${activeGameMode === 'string-walker' ? 'bg-teal-500 text-slate-900 border-teal-500' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-750'}`}
-                            >
-                                STRING WALKER
-                            </button>
-
-                            <button
-                                onClick={() => switchGameMode('triad-hunt')}
-                                className={`w-full text-left px-4 py-3 rounded-lg font-bold transition-all border ${activeGameMode === 'triad-hunt' ? 'bg-violet-500 text-white border-violet-500' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-750'}`}
-                            >
-                                TRIAD HUNT
-                            </button>
-                        </>
-                    )}
-
-                    <button
-                        onClick={() => switchGameMode('memory')}
-                        className={`w-full text-left px-4 py-3 rounded-lg font-bold transition-all border ${activeGameMode === 'memory' ? 'bg-blue-500 text-white border-blue-500' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-750'}`}
-                    >
-                        NOTE HUNT
-                    </button>
-
-                    <style>{`@keyframes slideIn { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }`}</style>
-                </div>
-            )}
-
-            {/* CLICK OUTSIDE TO CLOSE - Simple Overlay */}
-            {showMenu && (
-                <div
-                    onClick={() => setShowMenu(false)}
-                    style={{ position: 'fixed', top: '70px', left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1998 }}
-                />
-            )}
 
             {/* SETTINGS SIDEBAR (RIGHT DRAWER) */}
             {showSettings && (

@@ -4,10 +4,15 @@ import Fretboard from './Fretboard';
 import Layout from './Layout';
 import { GameMode, AccidentalMode } from '../types';
 
-function GameWrapper() {
+interface GameWrapperProps {
+  initialNotes?: string[];
+  initialStrings?: number[];
+  disablePersistence?: boolean;
+}
+
+function GameWrapper({ initialNotes, initialStrings, disablePersistence }: GameWrapperProps) {
   // --- LIFTED STATE ---
-  const [activeGameMode, setActiveGameMode] = useState<GameMode>(null); // 'triads', 'string-walker', 'memory', etc.
-  const [showMenu, setShowMenu] = useState(false);
+  const [activeGameMode, setActiveGameMode] = useState<GameMode>('memory'); // Default to Note Hunt
   const [showSettings, setShowSettings] = useState(false);
 
   // Persisted Settings
@@ -44,8 +49,7 @@ function GameWrapper() {
     <Layout
       activeGameMode={activeGameMode}
       setActiveGameMode={setActiveGameMode}
-      showMenu={showMenu}
-      setShowMenu={setShowMenu}
+
       showSettings={showSettings}
       setShowSettings={setShowSettings}
       proMode={proMode}
@@ -67,6 +71,9 @@ function GameWrapper() {
           totalXP={totalXP}
           setTotalXP={setTotalXP}
           accidentalMode={accidentalMode}
+          initialNotes={initialNotes}
+          initialStrings={initialStrings}
+          disablePersistence={disablePersistence}
         />
       </div>
     </Layout>

@@ -117,6 +117,9 @@ interface FretboardProps {
     totalXP: number;
     setTotalXP: React.Dispatch<React.SetStateAction<number>>;
     accidentalMode: AccidentalMode;
+    initialNotes?: string[];
+    initialStrings?: number[];
+    disablePersistence?: boolean;
 }
 
 export default function Fretboard({
@@ -124,7 +127,10 @@ export default function Fretboard({
     proMode,
     fretCount = 13,
     totalXP, setTotalXP,
-    accidentalMode = 'sharp'
+    accidentalMode = 'sharp',
+    initialNotes,
+    initialStrings,
+    disablePersistence = false
 }: FretboardProps) {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [isMobile, setIsMobile] = useState<boolean>(false);
@@ -165,13 +171,13 @@ export default function Fretboard({
     const [sessionHistory, setSessionHistory] = useState<Record<string, { correct: number; wrong: number }>>({}); // { 'C#': { correct: 0, wrong: 0 } }
     // const [pieMenuPosition, setPieMenuPosition] = useState(null); // REMOVED: PieMenu tracks itself now
 
-    // Initialize with defaults to avoid SSR crash
-    const [memoryAllowedNotes, setMemoryAllowedNotes] = useState<string[]>(GLOBAL_NOTES);
-    const [memoryAllowedStrings, setMemoryAllowedStrings] = useState<number[]>([0, 1, 2, 3, 4, 5]);
+    // Initialize with props or defaults to avoid SSR crash
+    const [memoryAllowedNotes, setMemoryAllowedNotes] = useState<string[]>(initialNotes || GLOBAL_NOTES);
+    const [memoryAllowedStrings, setMemoryAllowedStrings] = useState<number[]>(initialStrings || [0, 1, 2, 3, 4, 5]);
 
     // Hydrate Memory Settings
     useEffect(() => {
-        if (typeof window !== 'undefined') {
+        if (typeof window !== 'undefined' && !disablePersistence) {
             try {
                 const savedNotes = localStorage.getItem('fretboard_memoryAllowedNotes');
                 if (savedNotes) setMemoryAllowedNotes(JSON.parse(savedNotes));
@@ -193,6 +199,22 @@ export default function Fretboard({
     const [isCustomSelectionMode, setIsCustomSelectionMode] = useState<boolean>(false);
     const [customSelectedNotes, setCustomSelectedNotes] = useState<string[]>([]); // ["3-5", "2-7"]
     const [isCustomSetReady, setIsCustomSetReady] = useState<boolean>(false);
+
+    // Custom Selection Persistence
+    useEffect(() => {
+        if (typeof window !== 'undefined' && !disablePersistence) {
+            try {
+                const saved = localStorage.getItem('fretboard_customSelectedNotes');
+                if (saved) setCustomSelectedNotes(JSON.parse(saved));
+            } catch (e) { }
+        }
+    }, []);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined' && !disablePersistence) {
+            localStorage.setItem('fretboard_customSelectedNotes', JSON.stringify(customSelectedNotes));
+        }
+    }, [customSelectedNotes]);
 
     // CHORD DESIGNER STATE
     const [designerRoot, setDesignerRoot] = useState<string>('C');
@@ -503,22 +525,11 @@ export default function Fretboard({
     const nextMemoryTarget = () => {
         let validPositions: NoteConfig[] = [];
 
-        if (isCustomSetReady && customSelectedNotes.length > 0) {
-            // USE CUSTOM SELECTION
+        if (customSelectedNotes.length > 0) {
+            // USE CUSTOM SELECTION (The One Source of Truth)
             validPositions = customSelectedNotes.map(key => {
                 const [s, f] = key.split('-').map(Number);
                 return { s, f, note: getNoteAt(s, f) };
-            });
-        } else {
-            // STANDARD SELECTION
-            memoryAllowedStrings.forEach(sIndex => {
-                if (!TUNING[sIndex]) return;
-                for (let f = 0; f <= fretCount; f++) {
-                    const note = getNoteAt(sIndex, f);
-                    if (memoryAllowedNotes.includes(note)) {
-                        validPositions.push({ s: sIndex, f: f, note: note });
-                    }
-                }
             });
         }
 
@@ -977,18 +988,32 @@ export default function Fretboard({
     };
 
 
-    const handleInteraction = (stringIndex: number, fretIndex: number, note: string) => {
-        if (!isMobile) {
-            const fullNote = getNoteWithOctave(stringIndex, fretIndex);
-            playNote(fullNote, stringIndex);
+    const handleInteraction = async (stringIndex: number, fretIndex: number, note: string) => {
+        // 1. Ensure Audio Context is running (Crucial for Mobile)
+        if (Tone.context.state !== 'running') {
+            await Tone.start();
         }
 
-        // Custom Mode Selection Logic
+        // 2. Play Audio (Allowed on all devices now)
+        const fullNote = getNoteWithOctave(stringIndex, fretIndex);
+        playNote(fullNote, stringIndex);
+
+        // 3. Custom Mode Selection Logic
         if (isCustomSelectionMode) {
             const key = `${stringIndex}-${fretIndex}`;
             setCustomSelectedNotes(prev => {
-                if (prev.includes(key)) return prev.filter(k => k !== key);
-                return [...prev, key];
+                const exists = prev.includes(key);
+                if (exists) {
+                    return prev.filter(k => k !== key);
+                } else {
+                    // Force Enable String logic
+                    if (!memoryAllowedStrings.includes(stringIndex)) {
+                        setMemoryAllowedStrings(sPrev =>
+                            sPrev.includes(stringIndex) ? sPrev : [...sPrev, stringIndex]
+                        );
+                    }
+                    return [...prev, key];
+                }
             });
             return;
         }
@@ -1560,322 +1585,243 @@ export default function Fretboard({
             {/* MEMORY GAME HUD */}
             {/* MEMORY GAME HUD */}
             {activeGameMode === 'memory' && !memoryGameActive && (
-                <div className="game-hud" style={{ width: 'auto', margin: '0 10px', flexDirection: 'column', gap: '8px', marginBottom: '15px', background: 'rgba(30, 41, 59, 0.5)', padding: '20px', borderRadius: '12px', border: '1px solid #3b82f6' }}>
+                <div className="game-hud" style={{ width: 'auto', margin: '0 10px', flexDirection: 'column', gap: '8px', marginBottom: '15px', background: 'rgba(30, 41, 59, 0.5)', padding: '20px', borderRadius: '12px', border: '1px solid #3b82f6', position: 'relative', zIndex: 500 }}>
 
                     {/* ROW 1: NOTES SELECTOR */}
-                    {!isCustomSelectionMode && !isCustomSetReady && (
-                        <div className="flex flex-col gap-1 items-center w-full">
-                            <div className="flex flex-col items-center gap-1 sm:gap-2 w-full max-w-3xl justify-center">
-                                {/* LABEL */}
-                                <div className="text-[0.6rem] sm:text-xs font-bold text-slate-500 w-full text-center shrink-0">NOTES</div>
+                    <div className="flex flex-col gap-1 items-center w-full">
+                        <div className="flex flex-col items-center gap-1 sm:gap-2 w-full max-w-3xl justify-center">
+                            {/* LABEL */}
+                            <div className="text-[0.6rem] sm:text-xs font-bold text-slate-500 w-full text-center shrink-0 uppercase tracking-widest">NOTES</div>
 
-                                {/* BUTTONS */}
-                                <div className="flex flex-wrap justify-center gap-1 sm:gap-2">
-                                    {['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'].map(note => (
-                                        <button
-                                            key={note}
-                                            disabled={isCustomSelectionMode}
-                                            onPointerDown={(e: React.PointerEvent<HTMLButtonElement>) => {
-                                                e.preventDefault();
-                                                e.currentTarget.releasePointerCapture(e.pointerId); // Allow smooth dragging
-                                                const isActive = memoryAllowedNotes.includes(note);
-                                                const action = isActive ? 'remove' : 'add';
-                                                dragSelectRef.current = { active: true, type: 'note' as any, action };
+                            {/* BUTTONS */}
+                            <div className="flex gap-1 sm:gap-2 items-center w-full justify-center">
+                                <select
+                                    className="bg-slate-800 text-slate-200 text-[0.55rem] sm:text-sm font-bold py-1.5 pl-2 pr-6 sm:py-2 sm:pl-4 sm:pr-10 rounded-lg border border-slate-600 outline-none focus:border-blue-500 appearance-none cursor-pointer"
+                                    style={{
+                                        backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394a3b8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")',
+                                        backgroundRepeat: 'no-repeat',
+                                        backgroundPosition: 'right 0.3rem center',
+                                        backgroundSize: '0.65em auto'
+                                    }}
+                                    onChange={(e) => {
+                                        const noteToAdd = e.target.value;
+                                        if (!noteToAdd) return;
 
-                                                // Immediate update
-                                                if (action === 'add') setMemoryAllowedNotes(prev => [...prev, note]);
-                                                else setMemoryAllowedNotes(prev => prev.filter(n => n !== note));
-                                            }}
-                                            onPointerEnter={() => {
-                                                const { active, type, action } = dragSelectRef.current;
-                                                if (active && type === 'note') {
-                                                    if (action === 'add' && !memoryAllowedNotes.includes(note)) {
-                                                        setMemoryAllowedNotes(prev => [...prev, note]);
-                                                        setIsCustomSetReady(false);
-                                                    } else if (action === 'remove' && memoryAllowedNotes.includes(note)) {
-                                                        setMemoryAllowedNotes(prev => prev.filter(n => n !== note));
-                                                        setIsCustomSetReady(false);
+                                        const fretLimit = 22;
+
+                                        const newSelection = [...customSelectedNotes];
+
+                                        for (let s = 0; s < 6; s++) {
+                                            if (!memoryAllowedStrings.includes(s)) continue; // Check string filter
+                                            for (let f = 0; f <= fretLimit; f++) {
+                                                const currentNote = getNoteAt(s, f);
+                                                if (currentNote === noteToAdd) {
+                                                    const key = `${s}-${f}`;
+                                                    if (!newSelection.includes(key)) {
+                                                        newSelection.push(key);
                                                     }
                                                 }
-                                            }}
-                                            className={`
-                                            w-7 h-7 sm:w-10 sm:h-10 rounded-md font-bold text-[0.6rem] sm:text-sm transition-all
-                                            flex items-center justify-center border cursor-pointer select-none touch-none
-                                            ${isCustomSelectionMode ? 'opacity-20 pointer-events-none grayscale' : ''}
-                                            ${memoryAllowedNotes.includes(note) && !isCustomSelectionMode
-                                                    ? 'bg-blue-500 text-white border-blue-500 shadow-lg shadow-blue-500/50 scale-105 z-10'
-                                                    : 'bg-slate-800 text-slate-400 border-slate-600 hover:border-slate-400 hover:text-white'}
-                                        `}
-                                        >
-                                            {formatNote(note, accidentalMode as AccidentalMode)}
-                                        </button>
-                                    ))}
-
-                                    {/* CUSTOM SELECTION BUTTON */}
-                                    <button
-                                        onClick={() => {
-                                            setIsCustomSelectionMode(true);
-
-                                            // IMPORT EXISTING SELECTION IF EMPTY OR OVERWRITE LOGIC?
-                                            // User wants to refine current selection.
-                                            // If we are NOT already in a "Ready Custom Set", we import from Standard filters.
-                                            // If we ARE (isCustomSetReady=true), we keep editing it.
-                                            if (!isCustomSetReady) {
-                                                const initialSelection: string[] = [];
-                                                const maxF = 22;
-                                                memoryAllowedStrings.forEach(s => {
-                                                    if (!TUNING[s]) return;
-                                                    for (let f = 0; f <= maxF; f++) {
-                                                        const n = getNoteAt(s, f);
-                                                        if (memoryAllowedNotes.includes(n)) {
-                                                            initialSelection.push(`${s}-${f}`);
-                                                        }
-                                                    }
-                                                });
-                                                setCustomSelectedNotes(initialSelection);
                                             }
-                                            setIsCustomSetReady(false);
-                                        }}
-                                        disabled={isCustomSelectionMode}
-                                        className={`
-                                        h-7 sm:h-10 px-2 sm:px-3 rounded-md font-bold text-[0.6rem] sm:text-sm transition-all
-                                        flex items-center justify-center border cursor-pointer select-none touch-none
-                                        bg-purple-600 text-white border-purple-500 shadow-lg shadow-purple-500/50 hover:bg-purple-500
-                                        ${isCustomSelectionMode ? 'bg-purple-800 border-purple-800 ring-2 ring-white cursor-default' : ''}
-                                    `}
-                                    >
-                                        CUSTOM
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* CUSTOM MODE CONTROLS */}
-                    {isCustomSelectionMode && (
-                        <div className="flex flex-col items-center gap-3 justify-center py-3 px-4 bg-slate-800/50 rounded-lg w-full border border-purple-500/30 animate-pulse-slow my-2">
-                            <span className="text-purple-300 text-sm sm:text-base font-bold uppercase tracking-wider text-center leading-tight">
-                                Select notes on the fretboard
-                            </span>
-
-                            <div className="flex gap-4">
-                                <button
-                                    onClick={() => {
-                                        setIsCustomSelectionMode(false);
-                                        setCustomSelectedNotes([]);
+                                        }
+                                        setCustomSelectedNotes(newSelection);
+                                        e.target.value = "";
                                     }}
-                                    className="px-4 py-2 rounded bg-slate-700 text-slate-300 text-xs font-bold hover:bg-slate-600 border border-slate-600"
                                 >
-                                    CANCEL
+                                    <option value="">ADD NOTE EVERYWHERE</option>
+                                    {GLOBAL_NOTES.map(n => (
+                                        <option key={n} value={n}>{formatNote(n, accidentalMode)}</option>
+                                    ))}
+                                </select>
+
+
+                                {/* MANUAL SELECTION TOGGLE */}
+                                <button
+                                    onClick={() => setIsCustomSelectionMode(!isCustomSelectionMode)}
+                                    className={`px-2 py-1.5 sm:px-4 sm:py-2 rounded-lg text-[0.55rem] sm:text-sm font-bold border transition-all whitespace-nowrap ${isCustomSelectionMode
+                                        ? 'bg-emerald-600 text-white border-emerald-500 shadow-lg shadow-emerald-500/20 animate-pulse'
+                                        : 'bg-slate-800 text-slate-200 border-slate-600 hover:border-blue-500'
+                                        }`}
+                                >
+                                    {isCustomSelectionMode ? 'END CUSTOM NOTE SELECTION' : 'CUSTOM NOTE SELECTION'}
                                 </button>
 
                                 <button
                                     onClick={() => setCustomSelectedNotes([])}
-                                    className="px-4 py-2 rounded bg-amber-600/20 text-amber-300 text-xs font-bold hover:bg-amber-600/40 border border-amber-500/50"
+                                    className="px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg bg-slate-700 text-slate-300 text-[0.55rem] sm:text-xs font-bold hover:bg-slate-600 border border-slate-600 whitespace-nowrap"
+                                    title="Clear Selection"
                                 >
-                                    CLEAR
-                                </button>
-
-                                <button
-                                    onClick={() => {
-                                        if (customSelectedNotes.length > 0) {
-                                            setIsCustomSelectionMode(false);
-                                            setIsCustomSetReady(true);
-                                        } else {
-                                            alert("Select at least one note!");
-                                        }
-                                    }}
-                                    className="px-4 py-2 rounded bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500 shadow-lg shadow-emerald-500/20 border border-emerald-500"
-                                >
-                                    OK
+                                    CLEAR ALL
                                 </button>
                             </div>
 
-                            {/* PRESETS SECTION */}
-                            <div className="w-full pt-3 mt-1 border-t border-slate-700/50 flex flex-col items-center gap-2">
-                                <span className="text-slate-400 text-[0.65rem] font-bold uppercase tracking-widest">
-                                    PRESETS:
-                                </span>
-                                <div className="flex flex-wrap gap-2 justify-center">
+                            {/* INFO TEXT FOR SELECTION MODE */}
+                            {isCustomSelectionMode && (
+                                <div className="w-full text-center mt-2">
+                                    <span className="text-emerald-400 text-xs font-bold tracking-wider animate-pulse">
+                                        TAP NOTES ON FRETBOARD TO SELECT
+                                    </span>
+                                </div>
+                            )}
+
+
+                        </div>
+                    </div>
+
+                    {/* ROW 2: STRINGS SELECTOR */}
+                    <div className="flex justify-center flex-col items-center gap-[5px] sm:gap-4 mt-[5px] sm:mt-4">
+                        <div className="flex flex-col items-center gap-1 sm:gap-2 w-full max-w-3xl justify-center">
+                            {/* LABEL */}
+                            <div className="text-[0.6rem] sm:text-xs font-bold text-slate-500 w-full text-center shrink-0 uppercase tracking-widest">STRINGS-FILTER</div>
+
+                            <div className="grid grid-cols-6 gap-0.5 sm:gap-1 w-auto min-w-[180px] max-w-[220px] sm:min-w-[300px] sm:max-w-[400px]">
+                                {[5, 4, 3, 2, 1, 0].map((stringIndex, i) => (
                                     <button
-                                        onClick={() => {
-                                            const naturals: string[] = [];
-                                            // Iterate all positions to find naturals
-                                            for (let s = 0; s < 6; s++) {
-                                                for (let f = 0; f <= 22; f++) { // Hardcoded max frets for now, covers standard range
-                                                    const note = getNoteAt(s, f);
-                                                    if (!note.includes('#')) {
-                                                        naturals.push(`${s}-${f}`);
-                                                    }
+                                        key={stringIndex}
+                                        onPointerDown={(e: React.PointerEvent<HTMLButtonElement>) => {
+                                            e.preventDefault();
+                                            e.currentTarget.releasePointerCapture(e.pointerId);
+                                            const isActive = memoryAllowedStrings.includes(stringIndex);
+                                            const action = isActive ? 'remove' : 'add';
+                                            dragSelectRef.current = { active: true, type: 'string', action };
+
+                                            // Immediate update
+                                            if (action === 'add') setMemoryAllowedStrings(prev => [...prev, stringIndex]);
+                                            else setMemoryAllowedStrings(prev => prev.filter(s => s !== stringIndex));
+                                        }}
+                                        onPointerEnter={() => {
+                                            const { active, type, action } = dragSelectRef.current;
+                                            if (active && type === 'string') {
+                                                if (action === 'add' && !memoryAllowedStrings.includes(stringIndex)) {
+                                                    setMemoryAllowedStrings(prev => [...prev, stringIndex]);
+                                                } else if (action === 'remove' && memoryAllowedStrings.includes(stringIndex)) {
+                                                    setMemoryAllowedStrings(prev => prev.filter(s => s !== stringIndex));
                                                 }
                                             }
-                                            setCustomSelectedNotes(naturals);
                                         }}
-                                        className="px-2 py-1 rounded-full bg-slate-700 text-slate-300 text-[0.65rem] font-bold hover:bg-slate-600 border border-slate-600 transition-colors"
-                                    >
-                                        NATURALS
-                                    </button>
-
-                                    {/* USER PRESETS */}
-                                    {userPresets.map(preset => (
-                                        <button
-                                            key={preset.id}
-                                            onClick={() => {
-                                                if (isDeletingPresets) {
-                                                    setUserPresets(prev => prev.filter(p => p.id !== preset.id));
-                                                } else {
-                                                    setCustomSelectedNotes(preset.notes);
-                                                }
-                                            }}
-                                            className={`px-2 py-1 rounded-full text-[0.65rem] font-bold transition-all ${isDeletingPresets
-                                                ? 'bg-red-900/50 text-red-300 border border-red-500 hover:bg-red-800 animate-pulse'
-                                                : 'bg-slate-700 text-slate-300 border border-slate-600 hover:bg-slate-600'
-                                                }`}
-                                        >
-                                            {preset.name} {isDeletingPresets && '×'}
-                                        </button>
-                                    ))}
-
-                                    {/* NEW PRESET INPUT OR BUTTON */}
-                                    {isCreatingPreset ? (
-                                        <input
-                                            autoFocus
-                                            value={newPresetName}
-                                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewPresetName(e.target.value.toUpperCase())}
-                                            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                                                if (e.key === 'Enter') savePreset();
-                                                if (e.key === 'Escape') {
-                                                    setIsCreatingPreset(false);
-                                                    setNewPresetName('');
-                                                }
-                                            }}
-                                            onBlur={savePreset}
-                                            className="px-2 py-1 rounded-full bg-blue-900/50 text-blue-200 text-[0.65rem] font-bold border border-blue-500 w-24 outline-none text-center h-[26px]"
-                                            placeholder="NAME"
-                                        />
-                                    ) : (
-                                        <>
-                                            <button
-                                                onClick={() => {
-                                                    if (customSelectedNotes.length === 0) {
-                                                        alert("Select notes first!");
-                                                        return;
-                                                    }
-                                                    setIsCreatingPreset(true);
-                                                    setIsDeletingPresets(false); // Turn off delete mode if adding
-                                                }}
-                                                className="px-2 py-1 rounded-full bg-blue-600/20 text-blue-400 text-[0.65rem] font-bold hover:bg-blue-600/40 border border-blue-500/50 transition-colors"
-
-                                            >
-                                                + NEW PRESET
-                                            </button>
-
-                                            {userPresets.length > 0 && (
-                                                <button
-                                                    onClick={() => setIsDeletingPresets(!isDeletingPresets)}
-                                                    className={`px-2 py-1 rounded-full text-[0.65rem] font-bold border transition-colors ${isDeletingPresets
-                                                        ? 'bg-red-600 text-white border-red-500 shadow-lg shadow-red-500/20'
-                                                        : 'bg-slate-800 text-slate-500 border-slate-700 hover:text-red-400 hover:border-red-500/50'
-                                                        }`}
-                                                >
-                                                    {isDeletingPresets ? 'DONE' : 'DELETE'}
-                                                </button>
-                                            )}
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* CUSTOM READY PANEL */}
-                    {!isCustomSelectionMode && isCustomSetReady && (
-                        <div className="flex flex-col gap-3 items-center w-full py-4 animate-fade-in bg-slate-800/30 rounded-lg border border-purple-500/20 my-2">
-                            <div className="text-emerald-400 font-bold tracking-widest text-sm sm:text-lg uppercase drop-shadow-md">
-                                Custom Set Active
-                            </div>
-                            <div className="text-slate-400 text-xs text-center px-4">
-                                {customSelectedNotes.length} notes selected <br />
-                                <span className="opacity-50">Standard controls disabled</span>
-                            </div>
-                            <div className="flex gap-4">
-                                <button onClick={() => setIsCustomSelectionMode(true)} className="px-4 py-1.5 rounded bg-purple-600 text-white text-xs font-bold hover:bg-purple-500 border border-purple-500 shadow-lg shadow-purple-500/30 transition-all">
-                                    EDIT
-                                </button>
-                                <button onClick={() => setIsCustomSetReady(false)} className="px-4 py-1.5 rounded bg-slate-700 text-slate-300 text-xs font-bold hover:bg-slate-600 border border-slate-600 transition-all">
-                                    CANCEL CUSTOM
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {!isCustomSelectionMode && !isCustomSetReady && (
-                        <div className={`flex justify-center flex-col items-center gap-[5px] sm:gap-4 mt-[5px] sm:mt-4`}>
-                            {/* ROW 2: STRINGS SELECTOR */}
-                            <div className="flex flex-col items-center gap-1 sm:gap-2 w-full max-w-3xl justify-center">
-                                {/* LABEL */}
-                                <div className="text-[0.6rem] sm:text-xs font-bold text-slate-500 w-full text-center shrink-0">STRINGS</div>
-
-                                <div className="grid grid-cols-6 gap-0.5 sm:gap-1 w-auto min-w-[180px] max-w-[220px] sm:min-w-[300px] sm:max-w-[400px]">
-                                    {[5, 4, 3, 2, 1, 0].map((stringIndex, i) => (
-                                        <button
-                                            key={stringIndex}
-                                            onPointerDown={(e: React.PointerEvent<HTMLButtonElement>) => {
-                                                e.preventDefault();
-                                                e.currentTarget.releasePointerCapture(e.pointerId);
-                                                const isActive = memoryAllowedStrings.includes(stringIndex);
-                                                const action = isActive ? 'remove' : 'add';
-                                                dragSelectRef.current = { active: true, type: 'string', action };
-
-                                                // Immediate update
-                                                if (action === 'add') setMemoryAllowedStrings(prev => [...prev, stringIndex]);
-                                                else setMemoryAllowedStrings(prev => prev.filter(s => s !== stringIndex));
-                                            }}
-                                            onPointerEnter={() => {
-                                                const { active, type, action } = dragSelectRef.current;
-                                                if (active && type === 'string') {
-                                                    if (action === 'add' && !memoryAllowedStrings.includes(stringIndex)) {
-                                                        setMemoryAllowedStrings(prev => [...prev, stringIndex]);
-                                                    } else if (action === 'remove' && memoryAllowedStrings.includes(stringIndex)) {
-                                                        setMemoryAllowedStrings(prev => prev.filter(s => s !== stringIndex));
-                                                    }
-                                                }
-                                            }}
-                                            className={`
+                                        className={`
                                             h-7 w-full sm:h-10 rounded-md font-bold text-[0.6rem] sm:text-sm transition-all
                                             flex items-center justify-center border cursor-pointer select-none touch-none
                                         `}
-                                            style={{
-                                                backgroundColor: memoryAllowedStrings.includes(stringIndex) ? '#3b82f6' : '#1e293b',
-                                                color: memoryAllowedStrings.includes(stringIndex) ? '#fff' : '#94a3b8',
-                                                borderColor: memoryAllowedStrings.includes(stringIndex) ? '#3b82f6' : '#475569',
-                                                opacity: memoryAllowedStrings.includes(stringIndex) ? 1 : 0.5,
-                                                gridColumn: i + 1,
-                                                gridRow: 1
-                                            }}
-                                        >
-                                            {6 - stringIndex}
-                                        </button>
-                                    ))}
-                                </div>
+                                        style={{
+                                            backgroundColor: memoryAllowedStrings.includes(stringIndex) ? '#3b82f6' : '#1e293b',
+                                            color: memoryAllowedStrings.includes(stringIndex) ? '#fff' : '#94a3b8',
+                                            borderColor: memoryAllowedStrings.includes(stringIndex) ? '#3b82f6' : '#475569',
+                                            opacity: memoryAllowedStrings.includes(stringIndex) ? 1 : 0.5,
+                                            gridColumn: i + 1,
+                                            gridRow: 1
+                                        }}
+                                    >
+                                        {6 - stringIndex}
+                                    </button>
+                                ))}
                             </div>
                         </div>
-                    )}
+                    </div>
 
-                    {/* ROW 3: CONTROLS (Common for Standard & Ready Custom Modes) */}
-                    {!isCustomSelectionMode && (
-                        <div className="mt-3 flex gap-4 items-center justify-center w-full">
+                    {/* PRESETS SECTION (Always Visible) */}
+                    <div className="w-full mt-[5px] sm:mt-4 flex flex-col items-center gap-1 sm:gap-2">
+                        <span className="text-[0.6rem] sm:text-xs font-bold text-slate-500 w-full text-center shrink-0 uppercase tracking-widest">
+                            PRESETS
+                        </span>
+                        <div className="flex flex-wrap gap-2 justify-center">
                             <button
-                                onClick={startMemoryGame}
-                                className="h-9 px-6 sm:h-12 sm:px-8 rounded-lg font-bold text-xs sm:text-base bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 hover:bg-emerald-400 hover:scale-105 transition-all"
+                                onClick={() => {
+                                    const naturals: string[] = [];
+                                    for (let s = 0; s < 6; s++) {
+                                        for (let f = 0; f <= 22; f++) {
+                                            const note = getNoteAt(s, f);
+                                            if (!note.includes('#')) {
+                                                naturals.push(`${s}-${f}`);
+                                            }
+                                        }
+                                    }
+                                    setCustomSelectedNotes(naturals);
+                                }}
+                                className="px-2 py-1 rounded-full bg-slate-700 text-slate-300 text-[0.65rem] font-bold hover:bg-slate-600 border border-slate-600 transition-colors"
                             >
-                                START HUNT
+                                NATURALS
                             </button>
+
+                            {/* USER PRESETS */}
+                            {userPresets.map(preset => (
+                                <button
+                                    key={preset.id}
+                                    onClick={() => {
+                                        if (isDeletingPresets) {
+                                            setUserPresets(prev => prev.filter(p => p.id !== preset.id));
+                                        } else {
+                                            setCustomSelectedNotes(preset.notes);
+                                        }
+                                    }}
+                                    className={`px-2 py-1 rounded-full text-[0.65rem] font-bold transition-all ${isDeletingPresets
+                                        ? 'bg-red-900/50 text-red-300 border border-red-500 hover:bg-red-800 animate-pulse'
+                                        : 'bg-slate-700 text-slate-300 border border-slate-600 hover:bg-slate-600'
+                                        }`}
+                                >
+                                    {preset.name} {isDeletingPresets && '×'}
+                                </button>
+                            ))}
+
+                            {/* NEW PRESET INPUT OR BUTTON */}
+                            {isCreatingPreset ? (
+                                <input
+                                    autoFocus
+                                    value={newPresetName}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewPresetName(e.target.value.toUpperCase())}
+                                    onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                                        if (e.key === 'Enter') savePreset();
+                                        if (e.key === 'Escape') {
+                                            setIsCreatingPreset(false);
+                                            setNewPresetName('');
+                                        }
+                                    }}
+                                    onBlur={savePreset}
+                                    className="px-2 py-1 rounded-full bg-blue-900/50 text-blue-200 text-[0.65rem] font-bold border border-blue-500 w-24 outline-none text-center h-[26px]"
+                                    placeholder="NAME"
+                                />
+                            ) : (
+                                <>
+                                    <button
+                                        onClick={() => {
+                                            if (customSelectedNotes.length === 0) {
+                                                alert("Select notes first!");
+                                                return;
+                                            }
+                                            setIsCreatingPreset(true);
+                                            setIsDeletingPresets(false);
+                                        }}
+                                        className="px-2 py-1 rounded-full bg-blue-600/20 text-blue-400 text-[0.65rem] font-bold hover:bg-blue-600/40 border border-blue-500/50 transition-colors"
+                                    >
+                                        + NEW PRESET
+                                    </button>
+                                    {userPresets.length > 0 && (
+                                        <button
+                                            onClick={() => setIsDeletingPresets(!isDeletingPresets)}
+                                            className={`px-2 py-1 rounded-full text-[0.65rem] font-bold border transition-colors ${isDeletingPresets
+                                                ? 'bg-red-600 text-white border-red-500 shadow-lg shadow-red-500/20'
+                                                : 'bg-slate-800 text-slate-500 border-slate-700 hover:text-red-400 hover:border-red-500/50'
+                                                }`}
+                                        >
+                                            {isDeletingPresets ? 'DONE' : 'DELETE'}
+                                        </button>
+                                    )}
+                                </>
+                            )}
                         </div>
-                    )}
+                    </div>
+
+                    {/* ROW 3: START BUTTON */}
+                    <div className="mt-3 flex gap-4 items-center justify-center w-full">
+                        <button
+                            onClick={startMemoryGame}
+                            className="h-9 px-6 sm:h-12 sm:px-8 rounded-lg font-bold text-xs sm:text-base bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 hover:bg-emerald-400 hover:scale-105 transition-all"
+                        >
+                            START HUNT
+                        </button>
+                    </div>
+
                 </div>
-            )
-            }
+            )}
 
             {
                 activeGameMode === 'memory' && memoryGameActive && (
@@ -1996,13 +1942,11 @@ export default function Fretboard({
                             const feedbackState = getFeedback(sIndex, 0);
                             const isMemoryTarget = (activeGameMode === 'memory' && memoryTarget && memoryTarget.s === sIndex && memoryTarget.f === 0 && !revealedState);
 
-                            const isMenuPreview = !isCustomSelectionMode && !isCustomSetReady && activeGameMode === 'memory' && !memoryGameActive &&
-                                memoryAllowedStrings.includes(sIndex) &&
-                                memoryAllowedNotes.includes(openNote);
+
 
                             const isDesignerNote = false;
-                            const isCustomSelected = (isCustomSelectionMode || (isCustomSetReady && !memoryGameActive)) && customSelectedNotes.includes(`${sIndex}-0`);
-                            const isVisible = revealedState || isMenuPreview || isDesignerNote || isCustomSelected;
+                            const isCustomSelected = !memoryGameActive && customSelectedNotes.includes(`${sIndex}-0`) && memoryAllowedStrings.includes(sIndex);
+                            const isVisible = revealedState || isDesignerNote || isCustomSelected;
 
                             return (
                                 <div key={`nut-string-${sIndex}`} style={{
@@ -2033,18 +1977,20 @@ export default function Fretboard({
                                         data-fret={0}
                                         style={{
                                             width: '100%', height: '100%',
-                                            zIndex: 20,
+                                            zIndex: isCustomSelectionMode ? 100 : 20,
                                             cursor: 'pointer',
                                             touchAction: 'none', // Critical for Drag-to-Play
-                                            pointerEvents: isAllowed ? 'auto' : 'none',
+                                            pointerEvents: (isCustomSelectionMode || isAllowed) ? 'auto' : 'none',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center'
                                         }}
                                         onPointerDown={(e: React.PointerEvent<HTMLDivElement>) => {
                                             e.preventDefault();
+                                            // Unified Pointer Handler for Nut
                                             isPointerDown.current = true;
                                             lastPlayedRef.current = `${sIndex}-0`;
+                                            // Hand off strictly to handleInteraction
                                             handleInteraction(sIndex, 0, openNote);
                                         }}
                                         onPointerMove={(e: React.PointerEvent<HTMLDivElement>) => {
@@ -2088,14 +2034,7 @@ export default function Fretboard({
                                                     boxShadow: '0 0 5px rgba(59, 130, 246, 0.5)',
                                                     fontWeight: 'bold',
                                                     opacity: 0.9
-                                                } : (isMenuPreview && !revealedState ? {
-                                                    backgroundColor: '#3b82f6',
-                                                    borderColor: '#60a5fa',
-                                                    color: '#ffffff',
-                                                    boxShadow: '0 0 5px rgba(59, 130, 246, 0.5)',
-                                                    fontWeight: 'bold',
-                                                    opacity: 0.9
-                                                } : {}))
+                                                } : {})
                                             }}
                                         >
                                             {isMemoryTarget ? '?' : formatNote(openNote, accidentalMode)}
@@ -2178,9 +2117,7 @@ export default function Fretboard({
                                         // So Wood should only be under strings.
                                         // Correct.
                                         zIndex: 0,
-                                        backgroundImage: "url('/fretboard-wood-pale.webp')",
-                                        backgroundRepeat: 'repeat',
-                                        // Rotation logic from CSS was: translate(-50%, -50%) rotate(90deg) width 200vw.
+                                        // Audio Output Logic from CSS was: translate(-50%, -50%) rotate(90deg) width 200vw.
                                         // If I use standard background, grain is vertical?
                                         // Wood grain usually runs HORIZONTALLY along the neck.
                                         // Images usually vertical.
@@ -2247,7 +2184,7 @@ export default function Fretboard({
                                             // Actually, easier: This Sticky Layer IS a Grid too?
                                             // Or just use absolute positioning percentages:
                                             // Row 1 (Top) = 0% to 16.66%
-                                            // Center of Row 1 = 8.33%
+                                            // Center of Row 1 = 8.333%.
                                             // Since we have 6 rows...
 
                                             // Let's replicate the thickness logic
@@ -2266,7 +2203,7 @@ export default function Fretboard({
                                                         // Visual Row 1 (High E) is sIndex 5.
                                                         // Visual Row 6 (Low E) is sIndex 0.
                                                         // We want sIndex 5 to be at 1/12th of height?
-                                                        // Height is 100%. 6 rows. Center of first row is 1/12 aka 8.333%.
+                                                        // Center of first row is 1/12 aka 8.333%.
                                                         // Center of nth row is (n-1)*1/6 + 1/12.
                                                         top: `${((6 - sIndex - 1) * (100 / 6)) + (100 / 12)}%`,
                                                         transform: 'translateY(-50%)',
@@ -2352,12 +2289,7 @@ export default function Fretboard({
                                             // MEMORY TARGET CHECK
                                             const isMemoryTarget = memoryGameActive && memoryTarget && memoryTarget.s === stringIndex && memoryTarget.f === fretIndex;
 
-                                            // MENU PREVIEW
-                                            const isMenuPreview = !isCustomSelectionMode && !isCustomSetReady && activeGameMode === 'memory' && !memoryGameActive &&
-                                                memoryAllowedStrings.includes(stringIndex) &&
-                                                memoryAllowedNotes.includes(note);
 
-                                            const isCustomSelected = (isCustomSelectionMode || (isCustomSetReady && !memoryGameActive)) && customSelectedNotes.includes(key);
 
                                             // CHORD DESIGNER LOGIC
                                             let isDesignerNote = false;
@@ -2574,7 +2506,9 @@ export default function Fretboard({
                                                 }
                                             }
 
-                                            const isVisible = revealedState || isMenuPreview || isDesignerNote || isCustomSelected;
+                                            // Ensure isCustomSelected is defined here
+                                            const isCustomSelected = !memoryGameActive && customSelectedNotes.includes(`${stringIndex}-${fretIndex}`) && memoryAllowedStrings.includes(stringIndex);
+                                            const isVisible = revealedState || isDesignerNote || isCustomSelected;
 
                                             return (
                                                 <React.Fragment key={key}>
@@ -2588,15 +2522,16 @@ export default function Fretboard({
                                                             gridColumn: fretIndex,
                                                             gridRow: visualRow,
                                                             display: fretIndex === 0 ? 'none' : 'flex',
-                                                            pointerEvents: (activeGameMode === 'memory' && memoryGameActive && !memoryAllowedStrings.includes(stringIndex)) ? 'none' : 'auto',
+                                                            pointerEvents: 'auto',
                                                             touchAction: 'none', // Critical for Drag-To-Play on mobile
                                                             position: 'relative',
-                                                            zIndex: (practiceActive && currentStringIndex === stringIndex) ? 30 : 20
+                                                            zIndex: (isCustomSelectionMode || (practiceActive && currentStringIndex === stringIndex)) ? 30 : 20
                                                         }}
-                                                        onPointerDown={(e) => {
+                                                        onPointerDown={(e: React.PointerEvent<HTMLDivElement>) => {
                                                             e.preventDefault();
                                                             isPointerDown.current = true;
                                                             lastPlayedRef.current = `${stringIndex}-${fretIndex}`;
+                                                            // Hand off strictly to handleInteraction
                                                             handleInteraction(stringIndex, fretIndex, note);
                                                         }}
                                                         onPointerMove={(e) => {
@@ -2638,15 +2573,7 @@ export default function Fretboard({
                                                                     color: '#0f172a', // Dark text on bright colors
                                                                     boxShadow: `0 0 10px ${designerColor || '#fff'}`,
                                                                     opacity: 1
-                                                                } :
-                                                                    (isMenuPreview && !revealedState ? {
-                                                                        backgroundColor: '#3b82f6',
-                                                                        borderColor: '#60a5fa',
-                                                                        color: '#ffffff',
-                                                                        boxShadow: '0 0 5px rgba(59, 130, 246, 0.5)',
-                                                                        fontWeight: 'bold',
-                                                                        opacity: 0.9
-                                                                    } : {})
+                                                                } : {}
                                                             ) as React.CSSProperties}
                                                         >
                                                             {isMemoryTarget ? '?' : (isDesignerNote ? designerLabel : formatNote(note, accidentalMode))}
@@ -2673,6 +2600,7 @@ export default function Fretboard({
                                                     display: i === 0 ? 'none' : 'flex',
                                                     position: 'relative',
                                                     zIndex: 20,
+                                                    pointerEvents: 'none', // Allow clicks to pass through to note-cell
                                                     alignItems: 'center',
                                                     justifyContent: 'center',
                                                     backgroundColor: '#0f172a', // Solid mask for entire row
@@ -2702,7 +2630,7 @@ export default function Fretboard({
                 target={memoryTarget}
                 onGuess={handleMemoryGuess}
                 allowedNotes={(() => {
-                    if (isCustomSetReady) {
+                    if (customSelectedNotes.length > 0) {
                         const unique = new Set<string>();
                         customSelectedNotes.forEach(k => {
                             const parts = k.split('-');
@@ -2735,6 +2663,9 @@ const PieMenuOverlay = ({ target, onGuess, allowedNotes, visible, accidentalMode
     const [mounted, setMounted] = useState(false);
     useEffect(() => setMounted(true), []);
 
+    const radius = 85; // Radius of the menu
+    const innerRadius = 50;
+
     // Ref for the moving container (to update directly without re-renders)
     const overlayRef = useRef<HTMLDivElement>(null);
     const rafId = useRef<number | null>(null);
@@ -2748,8 +2679,17 @@ const PieMenuOverlay = ({ target, onGuess, allowedNotes, visible, accidentalMode
             const targetEl = document.getElementById(`note-cell-${target.s}-${target.f}`);
             if (targetEl && overlayRef.current) {
                 const rect = targetEl.getBoundingClientRect();
-                const centerX = rect.left + rect.width / 2;
+                let centerX = rect.left + rect.width / 2;
                 const centerY = rect.top + rect.height / 2;
+
+                // EDGE DETECTION / CLAMPING
+                // Ensure menu doesn't go off-screen (Left or Right)
+                const margin = 15;
+                const minX = radius + margin;
+                const maxX = window.innerWidth - radius - margin;
+
+                if (centerX < minX) centerX = minX; // Left edge
+                else if (centerX > maxX) centerX = maxX; // Right edge
 
                 // Apply directly to DOM for smoothness during scroll
                 overlayRef.current.style.transform = `translate(${centerX}px, ${centerY}px)`;
@@ -2782,8 +2722,8 @@ const PieMenuOverlay = ({ target, onGuess, allowedNotes, visible, accidentalMode
     if (!visible || !target || !mounted) return null;
 
     const notes = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'G#', 'D#', 'A#', 'F'];
-    const radius = 85;
-    const innerRadius = 50;
+    // const radius defined above
+    // const innerRadius defined above
     const sliceAngle = 360 / 12;
 
     const content = (
