@@ -22,6 +22,11 @@ export const metadata: Metadata = {
     description: "Master the guitar fretboard with FretHunt. Free, no signup, works on mobile.",
     type: 'website',
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'FretHunt',
+    description: 'Master the guitar fretboard interactively.',
+  },
 };
 
 export default function RootLayout({
@@ -29,11 +34,29 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'FretHunt',
+    applicationCategory: 'EducationalApplication',
+    operatingSystem: 'Any',
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'USD',
+    },
+    description: 'Master the guitar fretboard with FretHunt. The fastest free way to memorize guitar notes using interactive gamification and real audio.',
+  };
+
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         {children}
       </body>
     </html>

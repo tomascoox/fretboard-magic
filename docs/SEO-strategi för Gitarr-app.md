@@ -22,9 +22,11 @@ Denna lista är extraherad från strategin för att enkelt kunna bockas av.
 
 ### **SEO & Struktur**
 - [ ] Sätt upp URL-struktur för specifika verktyg (t.ex. `/tools/bass-guitar`).
-- [ ] Implementera Schema.org (`SoftwareApplication`, `HowTo`).
+- [x] Implementera Schema.org (`SoftwareApplication`).
 - [ ] Unika meta-taggar för varje "view" eller verktygsvariant.
 - [ ] Dynamisk "Game Over"-skärm med interna länkar.
+- [x] Sitemap.xml & Robots.txt (Kritiskt för indexering).
+- [x] Twitter Cards Metadata.
 
 ### **Spelmekanik (Gamification)**
 - [ ] Implementera "Game Loop" (Trigger -> Action -> Reward).
