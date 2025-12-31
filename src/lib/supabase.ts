@@ -25,7 +25,8 @@ const mockClient = {
         insert: () => ({ select: () => ({ single: () => ({ data: null, error: { message: 'Missing DB Config' } }) }) }),
         upsert: () => ({ select: () => ({ single: () => ({ data: null, error: { message: 'Missing DB Config' } }) }) })
     }),
-    storage: { from: () => ({ getPublicUrl: () => ({ data: { publicUrl: '' } }) }) }
+    storage: { from: () => ({ getPublicUrl: () => ({ data: { publicUrl: '' } }) }) },
+    auth: { getUser: () => Promise.resolve({ data: { user: null }, error: null }) }
 } as any;
 
 // 1. Client for public access

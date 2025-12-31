@@ -150,7 +150,7 @@ export default function Fretboard({
 
     // ADMIN CHECK & PORTAL TARGET
     useEffect(() => {
-        supabase.auth.getUser().then(({ data }) => {
+        supabase.auth.getUser().then(({ data }: any) => {
             if (data.user) setHasAdmin(true);
         });
         setNavbarContainer(document.getElementById('navbar-actions'));
