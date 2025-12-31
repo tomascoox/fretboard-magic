@@ -21,7 +21,7 @@ Denna lista är extraherad från strategin för att enkelt kunna bockas av.
 - [x] Mobil-first responsiv design.
 
 ### **SEO & Struktur**
-- [ ] Sätt upp URL-struktur för specifika verktyg (t.ex. `/tools/bass-guitar`).
+- [ ] Sätt upp URL-struktur för specifika verktyg (t.ex. `/tools/drop-d-tuning`).
 - [x] Implementera Schema.org (`SoftwareApplication`).
 - [ ] Unika meta-taggar för varje "view" eller verktygsvariant.
 - [ ] Dynamisk "Game Over"-skärm med interna länkar.
@@ -113,10 +113,10 @@ Här försöker användaren lösa specifika teoriproblem eller hitta metoder fö
 
 Dessa användare vet exakt vad de vill ha – ett specifikt verktyg för en specifik situation.
 
-* **Nyckelord:** "random note generator guitar" 14, "virtual fretboard visualizer" 11, "bass fretboard trainer" 25, "left handed guitar notes quiz" 23, "drop d tuning fretboard map".1  
+* **Nyckelord:** "random note generator guitar" 14, "virtual fretboard visualizer" 11, "left handed guitar notes quiz" 23, "drop d tuning fretboard map".1  
 * **Programmatisk SEO-Möjlighet:** Detta är guldgruvan för en SPA. Applikationen bör generera statiska landningssidor för varje tänkbar permutation av verktyget. Istället för en enda sida där användaren väljer inställningar, bör det finnas unika URL:er som fungerar som ingångar:  
   * /tools/left-handed-fretboard-trainer  
-  * /tools/bass-guitar-note-quiz  
+  * /tools/left-handed-fretboard-trainer  
   * /tools/drop-d-tuning-memorization  
   * /tools/open-g-tuning-chart
 

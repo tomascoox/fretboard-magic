@@ -209,11 +209,49 @@ export default function Fretboard({
                 if (savedStrings) setMemoryAllowedStrings(JSON.parse(savedStrings));
             } catch (e) { }
         }
-    }, []);
+
+        // Handling initialNotes prop for Tool Landing Pages (AUTO-START)
+        if (initialNotes && initialNotes.length > 0) {
+            const matching: string[] = [];
+            // Scan board to find all matching notes
+            for (let s = 0; s < 6; s++) {
+                if (initialStrings && !initialStrings.includes(s)) continue;
+
+                for (let f = 0; f <= fretCount; f++) {
+                    const n = getNoteAt(s, f);
+                    if (initialNotes.includes(n)) {
+                        matching.push(`${s}-${f}`);
+                    }
+                }
+            }
+
+            // 1. Set State for Persistence/Logic
+            setCustomSelectedNotes(matching);
+            setMemoryAllowedNotes(initialNotes);
+            if (initialStrings) setMemoryAllowedStrings(initialStrings);
+
+            // 2. AUTO-START GAME (Bypassing startMemoryGame() to avoid async state issues)
+            // We want to skip 'isCustomSelectionMode' and go straight to hunting.
+            if (matching.length > 0) {
+                setMemoryGameActive(true);
+                setMemoryGameOver(false);
+                setScore(0);
+                setFeedbackMsg('');
+
+                // Pick random first target locally
+                const rKey = matching[Math.floor(Math.random() * matching.length)];
+                const [rs, rf] = rKey.split('-').map(Number);
+                setMemoryTarget({ s: rs, f: rf, note: getNoteAt(rs, rf) });
+
+                // Ensure Custom Mode is OFF so we don't see the answers
+                setIsCustomSelectionMode(false);
+            }
+        }
+    }, [initialNotes, initialStrings, disablePersistence]);
 
     // LOW-LEVEL PERSISTENCE (Debouncing not strictly needed for settings)
-    useEffect(() => { if (typeof window !== 'undefined') localStorage.setItem('fretboard_memoryAllowedNotes', JSON.stringify(memoryAllowedNotes)); }, [memoryAllowedNotes]);
-    useEffect(() => { if (typeof window !== 'undefined') localStorage.setItem('fretboard_memoryAllowedStrings', JSON.stringify(memoryAllowedStrings)); }, [memoryAllowedStrings]);
+    useEffect(() => { if (typeof window !== 'undefined' && !disablePersistence) localStorage.setItem('fretboard_memoryAllowedNotes', JSON.stringify(memoryAllowedNotes)); }, [memoryAllowedNotes]);
+    useEffect(() => { if (typeof window !== 'undefined' && !disablePersistence) localStorage.setItem('fretboard_memoryAllowedStrings', JSON.stringify(memoryAllowedStrings)); }, [memoryAllowedStrings]);
     const [questionsLeft, setQuestionsLeft] = useState<number>(10); // 10 Questions per round
 
     // CUSTOM SELECTION STATE
