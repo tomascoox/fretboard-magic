@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { saveToolAction } from '@/app/actions';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 
 interface SaveToolModalProps {
     open: boolean;
@@ -15,12 +16,16 @@ export function SaveToolModal({ open, onClose, currentSettings, initialData }: S
     const [message, setMessage] = useState('');
     const [isSuccess, setIsSuccess] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [token, setToken] = useState('');
 
-    // Reset message when opening
+    // Reset message & get token when opening
     useEffect(() => {
         if (open) {
             setMessage('');
             setIsSuccess(false);
+            supabase.auth.getSession().then(({ data }: any) => {
+                if (data.session) setToken(data.session.access_token);
+            });
         }
     }, [open]);
 
@@ -66,6 +71,7 @@ export function SaveToolModal({ open, onClose, currentSettings, initialData }: S
                 </p>
 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                    <input type="hidden" name="access_token" value={token} />
                     <div>
                         <label className="block text-xs font-bold text-slate-400 uppercase mb-1">URL Slug</label>
                         <input

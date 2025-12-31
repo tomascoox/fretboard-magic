@@ -2,30 +2,14 @@
 
 import { supabaseAdmin } from '@/lib/supabase';
 import { revalidatePath } from 'next/cache';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
 
 export async function saveToolAction(prevState: any, formData: FormData) {
-    // 1. AUTH & ADMIN CHECK
-    const cookieStore = await cookies();
+    // 1. AUTH CHECK (Token passed from client)
+    const accessToken = formData.get('access_token') as string;
 
-    // Create a temp client just to check auth
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                getAll() { return cookieStore.getAll() },
-                setAll(cookiesToSet) {
-                    try {
-                        cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
-                    } catch { }
-                },
-            },
-        }
-    );
-
-    const { data: { user } } = await supabase.auth.getUser();
+    // Validate the token to get the user
+    // We use supabaseAdmin to verify, but getUser(token) validates against Supabase Auth API
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(accessToken);
 
     if (!user || user.email !== 'tomas@joox.se') {
         return { message: 'Unauthorized Access. Admin only.', success: false };
