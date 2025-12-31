@@ -3,6 +3,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import * as Tone from 'tone';
 import confetti from 'canvas-confetti';
+import { supabase } from '@/lib/supabase';
+import { SaveToolModal } from '@/components/SaveToolModal';
 import './Fretboard.css';
 import { GameMode, AccidentalMode, Note, NoteConfig, Preset, TriadKey, TriadProgression, NOTES as GLOBAL_NOTES } from '../types';
 
@@ -119,7 +121,10 @@ interface FretboardProps {
     accidentalMode: AccidentalMode;
     initialNotes?: string[];
     initialStrings?: number[];
+    initialPositions?: string[];
     disablePersistence?: boolean;
+    toolMetadata?: { slug: string; title: string; description: string };
+    startInEditMode?: boolean;
 }
 
 export default function Fretboard({
@@ -130,10 +135,26 @@ export default function Fretboard({
     accidentalMode = 'sharp',
     initialNotes,
     initialStrings,
-    disablePersistence = false
+    initialPositions,
+    disablePersistence = false,
+    toolMetadata,
+    startInEditMode = false
 }: FretboardProps) {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [isMobile, setIsMobile] = useState<boolean>(false);
+
+    // ADMIN STATE
+    const [hasAdmin, setHasAdmin] = useState(false);
+    const [showSaveModal, setShowSaveModal] = useState(false);
+    const [navbarContainer, setNavbarContainer] = useState<HTMLElement | null>(null);
+
+    // ADMIN CHECK & PORTAL TARGET
+    useEffect(() => {
+        supabase.auth.getUser().then(({ data }) => {
+            if (data.user) setHasAdmin(true);
+        });
+        setNavbarContainer(document.getElementById('navbar-actions'));
+    }, []);
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 700);
         checkMobile();
@@ -210,8 +231,46 @@ export default function Fretboard({
             } catch (e) { }
         }
 
-        // Handling initialNotes prop for Tool Landing Pages (AUTO-START)
-        if (initialNotes && initialNotes.length > 0) {
+        // Handling Logic: initialPositions (Exact Selection) -> initialNotes (Pattern)
+        if (initialPositions && initialPositions.length > 0) {
+            // EXACT MODE
+            setCustomSelectedNotes(initialPositions);
+
+            // Infer allowed notes for quiz text
+            const uniqueNotes = Array.from(new Set(initialPositions.map(k => {
+                const [s, f] = k.split('-').map(Number);
+                return getNoteAt(s, f);
+            })));
+            setMemoryAllowedNotes(uniqueNotes);
+
+            // Set allowed strings (Use prop if available, else infer)
+            if (initialStrings && initialStrings.length > 0) {
+                setMemoryAllowedStrings(initialStrings);
+            } else {
+                const uniqueStrings = Array.from(new Set(initialPositions.map(k => parseInt(k.split('-')[0]))));
+                setMemoryAllowedStrings(uniqueStrings);
+            }
+
+            // GAME START LOGIC
+            if (startInEditMode) {
+                setMemoryGameActive(false);
+                setIsCustomSelectionMode(true);
+                setFeedbackMsg('Editing Mode: Click fretboard to change notes.');
+            } else {
+                setMemoryGameActive(true);
+                setMemoryGameOver(false);
+                setScore(0);
+                setFeedbackMsg('');
+
+                // Pick random target from positions
+                const rKey = initialPositions[Math.floor(Math.random() * initialPositions.length)];
+                const [rs, rf] = rKey.split('-').map(Number);
+                setMemoryTarget({ s: rs, f: rf, note: getNoteAt(rs, rf) });
+
+                setIsCustomSelectionMode(false); // Hide dots to start clean hunt
+            }
+
+        } else if (initialNotes && initialNotes.length > 0) {
             const matching: string[] = [];
             // Scan board to find all matching notes
             for (let s = 0; s < 6; s++) {
@@ -247,7 +306,7 @@ export default function Fretboard({
                 setIsCustomSelectionMode(false);
             }
         }
-    }, [initialNotes, initialStrings, disablePersistence]);
+    }, [initialNotes, initialStrings, initialPositions, disablePersistence, startInEditMode]);
 
     // LOW-LEVEL PERSISTENCE (Debouncing not strictly needed for settings)
     useEffect(() => { if (typeof window !== 'undefined' && !disablePersistence) localStorage.setItem('fretboard_memoryAllowedNotes', JSON.stringify(memoryAllowedNotes)); }, [memoryAllowedNotes]);
@@ -1921,7 +1980,7 @@ export default function Fretboard({
                     position: 'sticky',
                     left: 0,
                     zIndex: 20,
-                    backgroundColor: '#0f172a' // Ensure opacity over scrolling content
+                    backgroundColor: 'transparent' // Ensure opacity over scrolling content
                 }}>
                     {/* Loop 1 to 6 (Top to Bottom) directly since Flex is Column */
                         [1, 2, 3, 4, 5, 6].map((num: number) => (
@@ -2108,7 +2167,7 @@ export default function Fretboard({
                     {/* Bottom Cap (aligns with numbers) */}
                     <div style={{
                         height: '30px',
-                        background: '#0f172a',
+                        background: 'transparent',
                         position: 'relative',
                         zIndex: 10
                     }} />
@@ -2663,7 +2722,7 @@ export default function Fretboard({
                                                     pointerEvents: 'none', // Allow clicks to pass through to note-cell
                                                     alignItems: 'center',
                                                     justifyContent: 'center',
-                                                    backgroundColor: '#0f172a', // Solid mask for entire row
+                                                    backgroundColor: 'transparent', // Transparent to show wood
                                                     height: '100%',
                                                     width: 'calc(100% + 1px)', // Slight overlap to prevent subpixel gaps
                                                     marginLeft: '-0.5px', // Center the overlap
@@ -2683,6 +2742,32 @@ export default function Fretboard({
                 </div>
             </div>
 
+
+            {/* ADMIN SAVE UI */}
+            {hasAdmin && (
+                <>
+                    {navbarContainer && createPortal(
+                        <button
+                            onClick={() => setShowSaveModal(true)}
+                            className="bg-amber-600 text-white px-3 py-1 rounded text-xs font-bold shadow-lg border border-amber-400 hover:bg-amber-500 transition-colors"
+                            style={{ fontFamily: 'monospace' }}
+                        >
+                            SAVE URL
+                        </button>,
+                        navbarContainer
+                    )}
+                    <SaveToolModal
+                        open={showSaveModal}
+                        onClose={() => setShowSaveModal(false)}
+                        currentSettings={
+                            customSelectedNotes.length > 0
+                                ? { initialPositions: customSelectedNotes, initialStrings: memoryAllowedStrings }
+                                : { initialNotes: memoryAllowedNotes, initialStrings: memoryAllowedStrings }
+                        }
+                        initialData={toolMetadata}
+                    />
+                </>
+            )}
 
             {/* OVERLAYS at the end to avoid z-index/clipping issues */}
             {/* PIE MENU (Portal) */}

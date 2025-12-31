@@ -7,15 +7,17 @@ import { GameMode, AccidentalMode } from '../types';
 interface GameWrapperProps {
   initialNotes?: string[];
   initialStrings?: number[];
+  initialPositions?: string[];
   disablePersistence?: boolean;
+  toolMetadata?: { slug: string; title: string; description: string };
+  startInEditMode?: boolean;
 }
 
-function GameWrapper({ initialNotes, initialStrings, disablePersistence }: GameWrapperProps) {
+function GameWrapper({ initialNotes, initialStrings, initialPositions, disablePersistence, toolMetadata, startInEditMode }: GameWrapperProps) {
   // --- LIFTED STATE ---
   const [activeGameMode, setActiveGameMode] = useState<GameMode>('memory'); // Default to Note Hunt
   const [showSettings, setShowSettings] = useState(false);
 
-  // Persisted Settings
   // Persisted Settings (Initialize with defaults to avoid SSR crash)
   const [proMode, setProMode] = useState(false);
   const [fretCount, setFretCount] = useState(13);
@@ -73,11 +75,14 @@ function GameWrapper({ initialNotes, initialStrings, disablePersistence }: GameW
           accidentalMode={accidentalMode}
           initialNotes={initialNotes}
           initialStrings={initialStrings}
+          initialPositions={initialPositions} // Passed down
           disablePersistence={disablePersistence}
+          toolMetadata={toolMetadata}
+          startInEditMode={startInEditMode}
         />
       </div>
     </Layout>
   )
 }
 
-export default GameWrapper
+export default GameWrapper;

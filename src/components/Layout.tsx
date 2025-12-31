@@ -56,6 +56,7 @@ export default function Layout({
 
                 {/* RIGHT: SETTINGS */}
                 <div style={{ display: 'flex', gap: '30px', alignItems: 'center' }}>
+                    <div id="navbar-actions"></div>
                     <button
                         onClick={() => setShowSettings(true)}
                         style={{ background: 'transparent', border: 'none', fontSize: '1.8rem', cursor: 'pointer', filter: 'grayscale(100%) opacity(0.5)', transition: 'all 0.2s' }}
