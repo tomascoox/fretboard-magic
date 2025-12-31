@@ -59,9 +59,11 @@ export default function Layout({
             }}>
                 {/* LEFT: BRAND */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                    <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '900', color: '#f8fafc', letterSpacing: '1px', fontStyle: 'italic' }}>
-                        Fret<span style={{ color: '#3b82f6' }}>Hunt</span>
-                    </h1>
+                    <Link href="/" style={{ textDecoration: 'none' }}>
+                        <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '900', color: '#f8fafc', letterSpacing: '1px', fontStyle: 'italic', cursor: 'pointer' }}>
+                            Fret<span style={{ color: '#3b82f6' }}>Hunt</span>
+                        </h1>
+                    </Link>
                 </div>
 
                 {/* RIGHT: SETTINGS */}
