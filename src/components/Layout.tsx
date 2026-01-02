@@ -6,32 +6,34 @@ import { supabase } from '@/lib/supabase';
 
 interface LayoutProps {
     children: React.ReactNode;
-    activeGameMode: GameMode;
-    setActiveGameMode: (mode: GameMode) => void;
+    activeGameMode?: GameMode;
+    setActiveGameMode?: (mode: GameMode) => void;
 
-    showSettings: boolean;
-    setShowSettings: (show: boolean) => void;
-    proMode: boolean;
-    setProMode: (mode: boolean) => void;
-    fretCount: number;
-    setFretCount: (count: number) => void;
-    totalXP: number;
-    setTotalXP: (xp: number) => void;
-    accidentalMode: AccidentalMode;
-    setAccidentalMode: (mode: AccidentalMode) => void;
+    showSettings?: boolean;
+    setShowSettings?: (show: boolean) => void;
+    proMode?: boolean;
+    setProMode?: (mode: boolean) => void;
+    fretCount?: number;
+    setFretCount?: (count: number) => void;
+    totalXP?: number;
+    setTotalXP?: (xp: number) => void;
+    accidentalMode?: AccidentalMode;
+    setAccidentalMode?: (mode: AccidentalMode) => void;
     pageTitle?: string;
+    allowScroll?: boolean;
 }
 
 export default function Layout({
     children,
 
-    showSettings, setShowSettings,
-    activeGameMode, setActiveGameMode,
-    proMode, setProMode,
-    fretCount, setFretCount,
-    totalXP, setTotalXP,
-    accidentalMode, setAccidentalMode,
-    pageTitle
+    showSettings = false, setShowSettings = () => { },
+    activeGameMode = 'memory', setActiveGameMode = () => { },
+    proMode = false, setProMode = () => { },
+    fretCount = 13, setFretCount = () => { },
+    totalXP = 0, setTotalXP = () => { },
+    accidentalMode = 'flat', setAccidentalMode = () => { },
+    pageTitle,
+    allowScroll = false
 }: LayoutProps) {
 
     const [isAdmin, setIsAdmin] = useState(false);
@@ -181,7 +183,7 @@ export default function Layout({
                 flex: 1,
                 display: 'flex',
                 flexDirection: 'column',
-                overflow: 'hidden', // Let children manage their own scroll (e.g. Fretboard)
+                overflow: allowScroll ? 'auto' : 'hidden', // Let children manage their own scroll (e.g. Fretboard)
                 paddingBottom: '120px' // Space for Footer + Ad
             }}>
                 {children}
@@ -220,6 +222,15 @@ export default function Layout({
                          data-ad-format="auto"
                          data-full-width-responsive="true"></ins> */}
                     <span style={{ color: '#334155', fontSize: '0.7rem', letterSpacing: '2px' }}>AD SPACE</span>
+                </div>
+
+                {/* LEGAL FOOTER */}
+                <div className="w-full py-1.5 flex justify-center gap-4 text-[0.6rem] text-slate-600 font-medium tracking-wide bg-slate-950 border-t border-slate-800">
+                    <span>© 2026 FretHunt</span>
+                    <Link href="/tools" className="hover:text-slate-400 transition-colors">Tools</Link>
+                    <Link href="/terms" className="hover:text-slate-400 transition-colors">Terms</Link>
+                    <Link href="/privacy" className="hover:text-slate-400 transition-colors">Privacy</Link>
+                    <a href="mailto:hello@frethunt.com" className="hover:text-slate-400 transition-colors">Contact</a>
                 </div>
             </div>
         </>
