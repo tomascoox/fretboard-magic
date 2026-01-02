@@ -1,0 +1,329 @@
+[
+    {
+        "slug": "learn-low-e-string",
+        "title": "Notes on Low E String (6th String)",
+        "description": "Master the foundation of the guitar. Learn all notes on the Low E string (Reference string for chords/scales).",
+        "initialStrings": [
+            0
+        ],
+        "initialPositions": [
+            "0-0",
+            "0-1",
+            "0-2",
+            "0-3",
+            "0-4",
+            "0-5",
+            "0-6",
+            "0-7",
+            "0-8",
+            "0-9",
+            "0-10",
+            "0-11",
+            "0-12"
+        ]
+    },
+    {
+        "slug": "learn-a-string",
+        "title": "Notes on A String (5th String)",
+        "description": "Memorize the A string. Essential for root-5 barre chords and finding your way around the neck.",
+        "initialStrings": [
+            1
+        ],
+        "initialPositions": [
+            "1-0",
+            "1-1",
+            "1-2",
+            "1-3",
+            "1-4",
+            "1-5",
+            "1-6",
+            "1-7",
+            "1-8",
+            "1-9",
+            "1-10",
+            "1-11",
+            "1-12"
+        ]
+    },
+    {
+        "slug": "learn-d-string",
+        "title": "Notes on D String (4th String)",
+        "description": "Learn the D string notes. The center of the fretboard and key for triad shapes.",
+        "initialStrings": [
+            2
+        ],
+        "initialPositions": [
+            "2-0",
+            "2-1",
+            "2-2",
+            "2-3",
+            "2-4",
+            "2-5",
+            "2-6",
+            "2-7",
+            "2-8",
+            "2-9",
+            "2-10",
+            "2-11",
+            "2-12"
+        ]
+    },
+    {
+        "slug": "learn-g-string",
+        "title": "Notes on G String (3rd String)",
+        "description": "Master the G string. Often tricky due to the tuning interval, but vital for solos and bends.",
+        "initialStrings": [
+            3
+        ],
+        "initialPositions": [
+            "3-0",
+            "3-1",
+            "3-2",
+            "3-3",
+            "3-4",
+            "3-5",
+            "3-6",
+            "3-7",
+            "3-8",
+            "3-9",
+            "3-10",
+            "3-11",
+            "3-12"
+        ]
+    },
+    {
+        "slug": "learn-b-string",
+        "title": "Notes on B String (2nd String)",
+        "description": "Learn the B string notes. Crucial for melody lines and understanding chord inversions.",
+        "initialStrings": [
+            4
+        ],
+        "initialPositions": [
+            "4-0",
+            "4-1",
+            "4-2",
+            "4-3",
+            "4-4",
+            "4-5",
+            "4-6",
+            "4-7",
+            "4-8",
+            "4-9",
+            "4-10",
+            "4-11",
+            "4-12"
+        ]
+    },
+    {
+        "slug": "learn-high-e-string",
+        "title": "Notes on High E String (1st String)",
+        "description": "Memorize the High E string. Mirrors the Low E string, doubling your fretboard knowledge instantly.",
+        "initialStrings": [
+            5
+        ],
+        "initialPositions": [
+            "5-0",
+            "5-1",
+            "5-2",
+            "5-3",
+            "5-4",
+            "5-5",
+            "5-6",
+            "5-7",
+            "5-8",
+            "5-9",
+            "5-10",
+            "5-11",
+            "5-12"
+        ]
+    },
+    {
+        "slug": "find-all-c-notes",
+        "title": "Find All 'C' Notes",
+        "description": "Locate every C note on the fretboard. The most common root note in music. Master its positions.",
+        "initialNotes": [
+            "C"
+        ]
+    },
+    {
+        "slug": "find-all-g-notes",
+        "title": "Find All 'G' Notes",
+        "description": "Locate every G note. A fundamental key for guitarists. See the pattern of Gs across the neck.",
+        "initialNotes": [
+            "G"
+        ]
+    },
+    {
+        "slug": "find-all-d-notes",
+        "title": "Find All 'D' Notes",
+        "description": "Find every D note on the guitar. Essential for navigating D-based chords and tunings.",
+        "initialNotes": [
+            "D"
+        ]
+    },
+    {
+        "slug": "find-all-a-notes",
+        "title": "Find All 'A' Notes",
+        "description": "Locate every A note. The standard tuning reference pitch (A440). Know exactly where they are.",
+        "initialNotes": [
+            "A"
+        ]
+    },
+    {
+        "slug": "find-all-e-notes",
+        "title": "Find All 'E' Notes",
+        "description": "Find every E note. With two E strings, this note appears most often. Master its geography.",
+        "initialNotes": [
+            "E"
+        ]
+    },
+    {
+        "slug": "find-all-f-notes",
+        "title": "Find All 'F' Notes",
+        "description": "The F note has no open string (in standard tuning). Find all the fretted F notes instantly.",
+        "initialNotes": [
+            "F"
+        ]
+    },
+    {
+        "slug": "find-all-b-notes",
+        "title": "Find All 'B' Notes",
+        "description": "Locate every B note. The leading tone to C. Vital for resolving melodies.",
+        "initialNotes": [
+            "B"
+        ]
+    },
+    {
+        "slug": "find-all-f-sharp-notes",
+        "title": "Find All 'F#' (F Sharp) Notes",
+        "description": "Master the black keys! F# is the first sharp in the circle of fifths. Learn its spots.",
+        "initialNotes": [
+            "F#"
+        ]
+    },
+    {
+        "slug": "find-all-b-flat-notes",
+        "title": "Find All 'Bb' (B Flat) Notes",
+        "description": "Common in jazz and blues (Key of F). Find all Bb notes on the fretboard.",
+        "initialNotes": [
+            "A#"
+        ]
+    },
+    {
+        "slug": "learn-first-position-notes",
+        "title": "First Position Notes (Frets 0-3)",
+        "description": "Master the 'Open Position'. The first 3 frets where most open chords live. Essential for beginners.",
+        "initialStrings": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+        ],
+        "initialPositions": [
+            "0-0",
+            "0-1",
+            "0-2",
+            "0-3",
+            "1-0",
+            "1-1",
+            "1-2",
+            "1-3",
+            "2-0",
+            "2-1",
+            "2-2",
+            "2-3",
+            "3-0",
+            "3-1",
+            "3-2",
+            "3-3",
+            "4-0",
+            "4-1",
+            "4-2",
+            "4-3",
+            "5-0",
+            "5-1",
+            "5-2",
+            "5-3"
+        ]
+    },
+    {
+        "slug": "learn-frets-5-to-8",
+        "title": "Middle Neck Notes (Frets 5-8)",
+        "description": "The 'Box 1' area for A Minor Pentatonic. Learn the notes in this crucial soloing zone.",
+        "initialStrings": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+        ],
+        "initialPositions": [
+            "0-5",
+            "0-6",
+            "0-7",
+            "0-8",
+            "1-5",
+            "1-6",
+            "1-7",
+            "1-8",
+            "2-5",
+            "2-6",
+            "2-7",
+            "2-8",
+            "3-5",
+            "3-6",
+            "3-7",
+            "3-8",
+            "4-5",
+            "4-6",
+            "4-7",
+            "4-8",
+            "5-5",
+            "5-6",
+            "5-7",
+            "5-8"
+        ]
+    },
+    {
+        "slug": "learn-frets-9-to-12",
+        "title": "Upper Neck Notes (Frets 9-12)",
+        "description": "Approaching the octave. Learn the notes leading up to the 12th fret double-dots.",
+        "initialStrings": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+        ],
+        "initialPositions": [
+            "0-9",
+            "0-10",
+            "0-11",
+            "0-12",
+            "1-9",
+            "1-10",
+            "1-11",
+            "1-12",
+            "2-9",
+            "2-10",
+            "2-11",
+            "2-12",
+            "3-9",
+            "3-10",
+            "3-11",
+            "3-12",
+            "4-9",
+            "4-10",
+            "4-11",
+            "4-12",
+            "5-9",
+            "5-10",
+            "5-11",
+            "5-12"
+        ]
+    }
+]
