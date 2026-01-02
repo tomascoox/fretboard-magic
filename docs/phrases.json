@@ -1,8 +1,8 @@
 [
     {
-        "slug": "learn-low-e-string",
-        "title": "Notes on Low E String (6th String)",
-        "description": "Master the foundation of the guitar. Learn all notes on the Low E string (Reference string for chords/scales).",
+        "slug": "learn-guitar-low-e-string",
+        "title": "Guitar Notes on Low E String (6th String)",
+        "description": "Master the foundation of the guitar fretboard. Learn all notes on the Low E string. The essential reference string for guitar chords and scales.",
         "initialStrings": [
             0
         ],
@@ -19,13 +19,25 @@
             "0-9",
             "0-10",
             "0-11",
-            "0-12"
+            "0-12",
+            "0-13",
+            "0-14",
+            "0-15",
+            "0-16",
+            "0-17",
+            "0-18",
+            "0-19",
+            "0-20",
+            "0-21",
+            "0-22",
+            "0-23",
+            "0-24"
         ]
     },
     {
-        "slug": "learn-a-string",
-        "title": "Notes on A String (5th String)",
-        "description": "Memorize the A string. Essential for root-5 barre chords and finding your way around the neck.",
+        "slug": "learn-guitar-a-string",
+        "title": "Guitar Notes on A String (5th String)",
+        "description": "Memorize the A string notes on guitar. Essential for root-5 barre chords and finding your way around the guitar neck.",
         "initialStrings": [
             1
         ],
@@ -42,13 +54,25 @@
             "1-9",
             "1-10",
             "1-11",
-            "1-12"
+            "1-12",
+            "1-13",
+            "1-14",
+            "1-15",
+            "1-16",
+            "1-17",
+            "1-18",
+            "1-19",
+            "1-20",
+            "1-21",
+            "1-22",
+            "1-23",
+            "1-24"
         ]
     },
     {
-        "slug": "learn-d-string",
-        "title": "Notes on D String (4th String)",
-        "description": "Learn the D string notes. The center of the fretboard and key for triad shapes.",
+        "slug": "learn-guitar-d-string",
+        "title": "Guitar Notes on D String (4th String)",
+        "description": "Learn the notes on the guitar D string. The center of the fretboard and key for triad shapes and octaves.",
         "initialStrings": [
             2
         ],
@@ -65,13 +89,25 @@
             "2-9",
             "2-10",
             "2-11",
-            "2-12"
+            "2-12",
+            "2-13",
+            "2-14",
+            "2-15",
+            "2-16",
+            "2-17",
+            "2-18",
+            "2-19",
+            "2-20",
+            "2-21",
+            "2-22",
+            "2-23",
+            "2-24"
         ]
     },
     {
-        "slug": "learn-g-string",
-        "title": "Notes on G String (3rd String)",
-        "description": "Master the G string. Often tricky due to the tuning interval, but vital for solos and bends.",
+        "slug": "learn-guitar-g-string",
+        "title": "Guitar Notes on G String (3rd String)",
+        "description": "Master the guitar G string notes. Often tricky due to the tuning interval, but vital for guitar solos and bends.",
         "initialStrings": [
             3
         ],
@@ -88,13 +124,25 @@
             "3-9",
             "3-10",
             "3-11",
-            "3-12"
+            "3-12",
+            "3-13",
+            "3-14",
+            "3-15",
+            "3-16",
+            "3-17",
+            "3-18",
+            "3-19",
+            "3-20",
+            "3-21",
+            "3-22",
+            "3-23",
+            "3-24"
         ]
     },
     {
-        "slug": "learn-b-string",
-        "title": "Notes on B String (2nd String)",
-        "description": "Learn the B string notes. Crucial for melody lines and understanding chord inversions.",
+        "slug": "learn-guitar-b-string",
+        "title": "Guitar Notes on B String (2nd String)",
+        "description": "Learn the notes on the Guitar B string. Critical for melody lines, chord inversions, and understanding the B-string shift.",
         "initialStrings": [
             4
         ],
@@ -111,13 +159,25 @@
             "4-9",
             "4-10",
             "4-11",
-            "4-12"
+            "4-12",
+            "4-13",
+            "4-14",
+            "4-15",
+            "4-16",
+            "4-17",
+            "4-18",
+            "4-19",
+            "4-20",
+            "4-21",
+            "4-22",
+            "4-23",
+            "4-24"
         ]
     },
     {
-        "slug": "learn-high-e-string",
-        "title": "Notes on High E String (1st String)",
-        "description": "Memorize the High E string. Mirrors the Low E string, doubling your fretboard knowledge instantly.",
+        "slug": "learn-guitar-high-e-string",
+        "title": "Guitar Notes on High E String (1st String)",
+        "description": "Memorize the High E string notes on guitar. Mirrors the Low E string, helping you master the entire guitar fretboard twice as fast.",
         "initialStrings": [
             5
         ],
@@ -134,85 +194,97 @@
             "5-9",
             "5-10",
             "5-11",
-            "5-12"
+            "5-12",
+            "5-13",
+            "5-14",
+            "5-15",
+            "5-16",
+            "5-17",
+            "5-18",
+            "5-19",
+            "5-20",
+            "5-21",
+            "5-22",
+            "5-23",
+            "5-24"
         ]
     },
     {
-        "slug": "find-all-c-notes",
-        "title": "Find All 'C' Notes",
-        "description": "Locate every C note on the fretboard. The most common root note in music. Master its positions.",
+        "slug": "find-c-notes-guitar",
+        "title": "Find All 'C' Notes on Guitar Fretboard",
+        "description": "Locate every C note on the guitar neck. C Major is the most common key. Master these root note positions instantly.",
         "initialNotes": [
             "C"
         ]
     },
     {
-        "slug": "find-all-g-notes",
-        "title": "Find All 'G' Notes",
-        "description": "Locate every G note. A fundamental key for guitarists. See the pattern of Gs across the neck.",
+        "slug": "find-g-notes-guitar",
+        "title": "Find All 'G' Notes on Guitar Fretboard",
+        "description": "Locate every G note on the guitar. A fundamental key for guitarists. Visualize the pattern of G notes across the neck.",
         "initialNotes": [
             "G"
         ]
     },
     {
-        "slug": "find-all-d-notes",
-        "title": "Find All 'D' Notes",
-        "description": "Find every D note on the guitar. Essential for navigating D-based chords and tunings.",
+        "slug": "find-d-notes-guitar",
+        "title": "Find All 'D' Notes on Guitar Fretboard",
+        "description": "Find every D note on the guitar fretboard. Essential for navigating D-based chords (Drop D tuning) and shapes.",
         "initialNotes": [
             "D"
         ]
     },
     {
-        "slug": "find-all-a-notes",
-        "title": "Find All 'A' Notes",
-        "description": "Locate every A note. The standard tuning reference pitch (A440). Know exactly where they are.",
+        "slug": "find-a-notes-guitar",
+        "title": "Find All 'A' Notes on Guitar Fretboard",
+        "description": "Locate every A note on the guitar. The standard tuning reference pitch (A440). Know exactly where A is on every string.",
         "initialNotes": [
             "A"
         ]
     },
     {
-        "slug": "find-all-e-notes",
-        "title": "Find All 'E' Notes",
-        "description": "Find every E note. With two E strings, this note appears most often. Master its geography.",
+        "slug": "find-e-notes-guitar",
+        "title": "Find All 'E' Notes on Guitar Fretboard",
+        "description": "Find every E note on the guitar. With two E strings, E is the most frequent anchor note. Master its geography now.",
         "initialNotes": [
             "E"
         ]
     },
     {
-        "slug": "find-all-f-notes",
-        "title": "Find All 'F' Notes",
-        "description": "The F note has no open string (in standard tuning). Find all the fretted F notes instantly.",
+        "slug": "find-f-notes-guitar",
+        "title": "Find All 'F' Notes on Guitar Fretboard",
+        "description": "The F note has no open string. Find all the fretted F notes on the guitar neck to break out of open position playing.",
         "initialNotes": [
             "F"
         ]
     },
     {
-        "slug": "find-all-b-notes",
-        "title": "Find All 'B' Notes",
-        "description": "Locate every B note. The leading tone to C. Vital for resolving melodies.",
+        "slug": "find-b-notes-guitar",
+        "title": "Find All 'B' Notes on Guitar Fretboard",
+        "description": "Locate every B note on the guitar. The leading tone to C. Vital for resolving melodies and chord progressions.",
         "initialNotes": [
             "B"
         ]
     },
     {
-        "slug": "find-all-f-sharp-notes",
-        "title": "Find All 'F#' (F Sharp) Notes",
-        "description": "Master the black keys! F# is the first sharp in the circle of fifths. Learn its spots.",
+        "slug": "find-f-sharp-notes-guitar",
+        "title": "Find All 'F#' (F Sharp) Notes on Guitar",
+        "description": "Master the sharps! F# is the first sharp in the key of G. Learn its spots on the guitar fretboard.",
         "initialNotes": [
             "F#"
         ]
     },
     {
-        "slug": "find-all-b-flat-notes",
-        "title": "Find All 'Bb' (B Flat) Notes",
-        "description": "Common in jazz and blues (Key of F). Find all Bb notes on the fretboard.",
+        "slug": "find-b-flat-notes-guitar",
+        "title": "Find All 'Bb' (B Flat) Notes on Guitar",
+        "description": "Common in jazz and blues guitar. Find all Bb notes on the fretboard to master the Key of F and Bb.",
         "initialNotes": [
             "A#"
         ]
     },
     {
-        "slug": "learn-first-position-notes",
-        "title": "First Position Notes (Frets 0-3)",
-        "description": "Master the 'Open Position'. The first 3 frets where most open chords live. Essential for beginners.",
+        "slug": "guitar-first-position-notes",
+        "title": "Guitar Notes: First Position (Frets 0-3)",
+        "description": "Master the guitar's 'Open Position'. The first 3 frets where most open chords live. The essential starting point for beginners.",
         "initialStrings": [
             0,
             1,
@@ -249,9 +321,9 @@
         ]
     },
     {
-        "slug": "learn-frets-5-to-8",
-        "title": "Middle Neck Notes (Frets 5-8)",
-        "description": "The 'Box 1' area for A Minor Pentatonic. Learn the notes in this crucial soloing zone.",
+        "slug": "guitar-middle-neck-notes",
+        "title": "Guitar Middle Neck Notes (Frets 5-8)",
+        "description": "The 'Box 1' area for A Minor Pentatonic. Learn the guitar notes in this crucial soloing zone (Frets 5 to 8).",
         "initialStrings": [
             0,
             1,
@@ -288,9 +360,9 @@
         ]
     },
     {
-        "slug": "learn-frets-9-to-12",
-        "title": "Upper Neck Notes (Frets 9-12)",
-        "description": "Approaching the octave. Learn the notes leading up to the 12th fret double-dots.",
+        "slug": "guitar-upper-neck-notes",
+        "title": "Guitar Upper Neck Notes (Frets 9-12)",
+        "description": "Approaching the octave. Learn the guitar notes leading up to the 12th fret double-dots. Unlock the upper register.",
         "initialStrings": [
             0,
             1,
