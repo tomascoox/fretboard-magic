@@ -1,13 +1,13 @@
-# **PROJEKTSTATUS (2025-12-30)**
+# **PROJEKTSTATUS (2025-12-31)**
 * **Namn:** FretHunt (tidigare fretboard-magic)
 * **Domän:** [frethunt.com](https://frethunt.com) (Live)
-* **Tech:** Next.js 16 (App Router), TypeScript, Vercel.
-* **Status:** Migration från Vite klar. Grundläggande SEO (Meta/OG) implementerad.
-* **Nästa Fokus:** Se checklistan nedan (PWA, Landningssidor, Schema).
+* **Tech:** Next.js 16, TypeScript, Vercel, Supabase (Auth + DB).
+* **Status:** Admin-verktyg för Programmatisk SEO är live. Auth implementerat.
+* **Nästa Fokus:** **INNEHÅLL (Skapa verktyg)**, sedan PWA och AdSense-wrapper.
 
 ---
 
-# **Strategisk Analys och Implementeringsplan för "Note Hunt": Marknadspositionering, Teknisk SEO och Monetarisering för en Webbaserad Gitarrutbildningsplattform**
+# **Strategisk Analys och Implementeringsplan för "Note Hunt": Marknadspositionering, Teknisk SEO och Monetarisering**
 
 ## **0. Implementerings-Checklista (Action Plan)**
 
@@ -16,26 +16,31 @@ Denna lista är extraherad från strategin för att enkelt kunna bockas av.
 ### **Teknik & Core**
 - [x] **Beslut:** Välj ramverk (Valt: Next.js).
 - [x] Migrera existerande React-kod till Next.js App Router.
+- [x] Implementera Admin-gränssnitt för att skapa verktyg/sidor utan kod.
 - [ ] Implementera "Phantom Wrapper" för sticky footer (förhindra CLS).
 - [ ] PWA-stöd (Offline-läge, Manifest för installation).
 - [x] Mobil-first responsiv design.
 
 ### **SEO & Struktur**
-- [ ] Sätt upp URL-struktur för specifika verktyg (t.ex. `/tools/drop-d-tuning`).
+- [x] Sätt upp URL-struktur för specifika verktyg (Dynamisk `/[slug]`).
 - [x] Implementera Schema.org (`SoftwareApplication`).
-- [ ] Unika meta-taggar för varje "view" eller verktygsvariant.
+- [x] Unika meta-taggar för varje "view" eller verktygsvariant (Styrs via Admin).
 - [ ] Dynamisk "Game Over"-skärm med interna länkar.
 - [x] Sitemap.xml & Robots.txt (Kritiskt för indexering).
 - [x] Twitter Cards Metadata.
 
 ### **Spelmekanik (Gamification)**
 - [ ] Implementera "Game Loop" (Trigger -> Action -> Reward).
-- [ ] Lägg till "Streak"-räknare (Dagar i rad).
+- [ ] Lägg till "Streak"-räknare (Koppla till User Account i DB).
 - [ ] Använd riktiga gitarr-samplingar (ej MIDI).
 - [ ] Lägg till "Visuellt Läge" (tyst läge).
 
 ### **Innehåll (Content)**
-- [ ] Skapa "Hub"-sida.
+- [ ] **PRIO 1:** Skapa 10 unika verktygssidor via Admin som utnyttjar nuvarande funktionalitet:
+    - Sträng-specifika (t.ex. "Lär dig E-strängen").
+    - Positionsspecifika (t.ex. "Band 1-5 / Första Positionen").
+    - Skal-baserade (t.ex. "C-dur noter" via manuellt notval).
+- [ ] Skapa "Hub"-sida (Lista alla verktyg snyggt).
 - [ ] Skriv 5 "Spoke"-artiklar (Minnesregler, Teori, etc).
 
 ### **Marknad & Monetarisering**
@@ -113,12 +118,12 @@ Här försöker användaren lösa specifika teoriproblem eller hitta metoder fö
 
 Dessa användare vet exakt vad de vill ha – ett specifikt verktyg för en specifik situation.
 
-* **Nyckelord:** "random note generator guitar" 14, "virtual fretboard visualizer" 11, "left handed guitar notes quiz" 23, "drop d tuning fretboard map".1  
+* **Nyckelord:** "memorize e string notes guitar" 14, "fretboard quiz first position" 11, "learn guitar notes game" 23.  
 * **Programmatisk SEO-Möjlighet:** Detta är guldgruvan för en SPA. Applikationen bör generera statiska landningssidor för varje tänkbar permutation av verktyget. Istället för en enda sida där användaren väljer inställningar, bör det finnas unika URL:er som fungerar som ingångar:  
-  * /tools/left-handed-fretboard-trainer  
-  * /tools/left-handed-fretboard-trainer  
-  * /tools/drop-d-tuning-memorization  
-  * /tools/open-g-tuning-chart
+  * /tools/learn-low-e-string  
+  * /tools/master-frets-1-to-5  
+  * /tools/c-major-notes-quiz  
+  * /tools/high-e-string-trainer
 
 ### **3.2. Hub and Spoke-Innehållsmodell**
 
@@ -131,7 +136,7 @@ För att bygga auktoritet rekommenderas en "Hub and Spoke"-modell där applikati
 | **Minnesregler (Mnemonics)** | "guitar string names acronyms", "Eddie Ate Dynamite alternatives" | Skapa en omfattande bibliotek av användargenererade minnesregler. Koppla dessa direkt till "Nybörjarläget" i spelet. | 20 visar populariteten av ramsor som "3 Gray Cats" och "Father Charles". |
 | **Skalor & Moder** | "mixolydian mode guitar positions", "learning ionian scale" | Interaktiva diagram som visar skalgrader snarare än bara prickar. Länka direkt till "Note Hunt"-övningar som isolerar dessa noter. | 23 (Fretonator) visar högt engagemang för specifika mod-verktyg. |
 | **Övningsrutiner** | "5 minute guitar practice routine", "daily fretboard drills" | Strukturerade övningsplaner som integrerar "Note Hunt"-sessioner. "Gör denna quiz i 3 minuter varje dag". | 5 nämner användare som gör "100 noter varje morgon" som en rutin. |
-| **Alternativa Stämningar** | "open G tuning notes", "drop D fretboard map", "DADGAD tuning theory" | Dedikerade sidor för alternativa stämningar, en funktion som ofta efterfrågas men saknas i enklare appar. | 1 understryker vikten av att stödja multipla stämningar för att nå bredare målgrupper. |
+| **Geografi & Positioner** | "guitar fretboard positions explained", "notes on first 5 frets" | Dedikerade sidor för att bemästra specifika delar av halsen ('Box 1', 'Open Position'). Detta löser problemet med att bli överväldigad av hela halsen. | 1 understryker vikten av att bryta ner halsen i mindre, hanterbara bitar ("chunking"). |
 
 ### **3.3. On-Page SEO för Webbapplikationer**
 
