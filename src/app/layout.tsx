@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import CookieConsent from '@/components/CookieConsent';
 import { GoogleAnalytics } from '@next/third-parties/google';
+import Script from 'next/script';
 import "./globals.css";
 
 const geistSans = Geist({
@@ -64,6 +65,12 @@ export default function RootLayout({
         <Analytics />
         <CookieConsent />
         <GoogleAnalytics gaId="G-3774YNSHKH" />
+        <Script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8193759811585804"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );
