@@ -178,14 +178,16 @@ export default function Layout({
             />
 
             {/* MAIN CONTENT WRAPPER */}
-            <div style={{
-                width: '100%',
-                flex: 1,
-                display: 'flex',
-                flexDirection: 'column',
-                overflow: allowScroll ? 'auto' : 'hidden', // Let children manage their own scroll (e.g. Fretboard)
-                paddingBottom: '120px' // Space for Footer + Ad
-            }}>
+            <div
+                id="main-scroll-container"
+                style={{
+                    width: '100%',
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    overflow: allowScroll ? 'auto' : 'hidden', // Let children manage their own scroll (e.g. Fretboard)
+                    paddingBottom: '120px' // Space for Footer + Ad
+                }}>
                 {children}
             </div>
 

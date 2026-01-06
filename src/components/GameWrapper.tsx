@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Fretboard from './Fretboard';
 import Layout from './Layout';
+import HomeMarketing from './HomeMarketing';
 import { GameMode, AccidentalMode } from '../types';
 
 interface GameWrapperProps {
@@ -63,6 +64,7 @@ function GameWrapper({ initialNotes, initialStrings, initialPositions, disablePe
       accidentalMode={accidentalMode}
       setAccidentalMode={setAccidentalMode}
       pageTitle={toolMetadata?.title}
+      allowScroll={true}
     >
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '0' }}>
         <Fretboard
@@ -81,6 +83,7 @@ function GameWrapper({ initialNotes, initialStrings, initialPositions, disablePe
           toolMetadata={toolMetadata}
           startInEditMode={startInEditMode}
         />
+        <HomeMarketing />
       </div>
     </Layout>
   )
