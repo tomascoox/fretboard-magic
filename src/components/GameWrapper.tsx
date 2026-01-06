@@ -83,7 +83,7 @@ function GameWrapper({ initialNotes, initialStrings, initialPositions, disablePe
           toolMetadata={toolMetadata}
           startInEditMode={startInEditMode}
         />
-        <HomeMarketing />
+        {!toolMetadata && <HomeMarketing />}
       </div>
     </Layout>
   )
