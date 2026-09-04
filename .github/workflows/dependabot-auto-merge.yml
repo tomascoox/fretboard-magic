@@ -10,13 +10,19 @@ jobs:
     runs-on: ubuntu-latest
     if: github.actor == 'dependabot[bot]'
     steps:
+      - name: Dependabot metadata
+        id: meta
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
       - name: Enable auto-merge
+        if: steps.meta.outputs.update-type != 'version-update:semver-major'
         run: gh pr merge --auto --merge "$PR_URL"
         env:
           PR_URL: ${{github.event.pull_request.html_url}}
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
       - name: Send email notification
-        if: success()
+        if: success() && steps.meta.outputs.update-type != 'version-update:semver-major'
         env:
           RESEND_API_KEY: ${{secrets.RESEND_API_KEY}}
           PR_TITLE: ${{github.event.pull_request.title}}
